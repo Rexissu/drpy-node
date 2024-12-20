@@ -2,29 +2,25 @@ name: Auto Sync Fork
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 每天执行一次，这是一个示例定时任务，可以根据需要修改
-  workflow_dispatch: # 也可以手动触发同步
+    - cron: '0 0 * * *'  # 每天 UTC 0:00 运行
+  workflow_dispatch:      # 允许手动触发
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout the Fork
+      - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          # 递归获取所有子模块，根据需要添加
-          submodules: true
-          # 设置为从上游仓库拉取最新代码
-          fetch-depth: 0
-      - name: Add upstream
-        run: |
-          git remote add upstream https://github.com/hjdhnx/drpy-node.git
+          fetch-depth: 0  # 拉取所有历史提交
 
       - name: Pull changes from upstream
         run: |
+          git remote add upstream https://github.com/hjdhnx/drpy-node.git
           git fetch upstream
-          git pull upstream main --rebase
+          git merge upstream/main -X theirs --no-edit  # 自动解决冲突，倾向于上游分支
 
-      - name: Push changes to your fork
+      - name: Commit and push changes
         run: |
           git push origin main
