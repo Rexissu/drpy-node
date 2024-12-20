@@ -1,4 +1,4 @@
-name: Auto Sync with Upstream
+name: Auto Sync Fork
 
 on:
   schedule:
@@ -9,19 +9,22 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout the Fork
+        uses: actions/checkout@v3
+        with:
+          # 递归获取所有子模块，根据需要添加
+          submodules: true
+          # 设置为从上游仓库拉取最新代码
+          fetch-depth: 0
+      - name: Add upstream
+        run: |
+          git remote add upstream https://github.com/hjdhnx/drpy-node.git
 
-    - name: Add upstream
-      run: |
-        git remote add upstream https://github.com/hjdhnx/drpy-node.git
+      - name: Pull changes from upstream
+        run: |
+          git fetch upstream
+          git pull upstream main --rebase
 
-    - name: Pull changes from upstream
-      run: |
-        git fetch upstream
-        git pull upstream main
-      
-
-    - name: Push changes to your fork
-      run: |
-        git push origin main
+      - name: Push changes to your fork
+        run: |
+          git push origin main
