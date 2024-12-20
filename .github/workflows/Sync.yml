@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the Fork
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
         with:
           # 递归获取所有子模块，根据需要添加
           submodules: true
