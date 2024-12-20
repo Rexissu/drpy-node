@@ -2,7 +2,7 @@ name: Auto Sync with Upstream
 
 on:
   schedule:
-    - cron: '0 1 * * *' # 每天凌晨1点执行
+    - cron: '33 12 * * *' # 每天凌晨1点执行
 
 jobs:
   sync:
