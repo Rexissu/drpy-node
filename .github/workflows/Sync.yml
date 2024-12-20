@@ -2,7 +2,8 @@ name: Auto Sync with Upstream
 
 on:
   schedule:
-    - cron: '00 13 * * *' # 每天凌晨1点执行
+    - cron: '0 0 * * *' # 每天执行一次，这是一个示例定时任务，可以根据需要修改
+  workflow_dispatch: # 也可以手动触发同步
 
 jobs:
   sync:
