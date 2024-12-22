@@ -8,6 +8,8 @@ const rule = {
     homeUrl: 'https://fanqienovel.com/api/author/book/category_list/v0/',
     url: '/api/author/library/book_list/v0/?page_count=18&page_index=(fypage-1)&gender=-1&category_id=fyclass&creation_status=-1&word_count=-1&sort=0#fyfilter',
     class_parse: async () => {
+        log('env:', ENV.get());
+        log('ali_token:', ENV.get('ali_cookie'));
         log('Buffer:', typeof Buffer)
         log('URLSearchParams:', typeof URLSearchParams)
         log('axiosX', typeof axiosX);
@@ -17,9 +19,11 @@ const rule = {
         log(ck);
         // log(cookieToJson(ck));
         let ck_obj = COOKIE.parse(ck[0]);
+        let ck_obj1 = COOKIE.parse(ck);
         log(ck_obj);
+        log(ck_obj1);
         log(ck_obj.BAIDUID);
-        log(COOKIE.stringify("name", 'echo', {
+        log(COOKIE.serialize("name", 'echo', {
             httpOnly: true,
             maxAge: 60 * 60 * 24 * 7, // 1 week
         }));
