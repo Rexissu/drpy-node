@@ -1,7 +1,8 @@
 import {readdirSync, readFileSync, writeFileSync, existsSync} from 'fs';
 import path from 'path';
 import * as drpy from '../libs/drpyS.js';
-import {naturalSort} from '../utils/utils.js'
+import {naturalSort, urljoin} from '../utils/utils.js'
+import {ENV} from "../utils/env.js";
 
 // 工具函数：生成 JSON 数据
 async function generateSiteJSON(jsDir, requestHost, sub, subFilePath) {
@@ -27,6 +28,10 @@ async function generateSiteJSON(jsDir, requestHost, sub, subFilePath) {
         }
     }
     let sites = [];
+    // console.log('hide_adult:', ENV.get('hide_adult'));
+    if (ENV.get('hide_adult') === '1') {
+        valid_files = valid_files.filter(it => !(new RegExp('\\[[密]\\]|密+')).test(it));
+    }
     for (const file of valid_files) {
         const baseName = path.basename(file, '.js'); // 去掉文件扩展名
         const key = `drpyS_${baseName}`;
@@ -102,6 +107,43 @@ function generateParseJSON(jxDir, requestHost) {
     return {parses};
 }
 
+function generateLivesJSON(requestHost) {
+    let lives = [];
+    let live_url = process.env.LIVE_URL || '';
+    if (live_url && !live_url.startsWith('http')) {
+        let public_url = urljoin(requestHost, 'public/');
+        live_url = urljoin(public_url, live_url);
+    }
+    // console.log('live_url:', live_url);
+    if (live_url) {
+        lives.push(
+            {
+                "name": "直播",
+                "type": 0,
+                "url": live_url,
+                "playerType": 1,
+                "ua": "okhttp/3.12.13",
+                "epg": "https://epg.mxdyeah.top/api/diyp/?ch={name}&date={date}",
+                "logo": "https://live.mxdyeah.top/logo/{name}.png"
+            }
+        )
+    }
+    return {lives}
+}
+
+function generatePlayerJSON(configDir, requestHost) {
+    let playerConfig = {};
+    let playerConfigPath = path.join(configDir, './player.json');
+    if (existsSync(playerConfigPath)) {
+        try {
+            playerConfig = JSON.parse(readFileSync(playerConfigPath, 'utf-8'))
+        } catch (e) {
+
+        }
+    }
+    return playerConfig
+}
+
 function getSubs(subFilePath) {
     let subs = [];
     try {
@@ -150,7 +192,9 @@ export default (fastify, options, done) => {
 
             const siteJSON = await generateSiteJSON(options.jsDir, requestHost, sub, options.subFilePath);
             const parseJSON = generateParseJSON(options.jxDir, requestHost);
-            const configObj = {sites_count: siteJSON.sites.length, ...siteJSON, ...parseJSON};
+            const livesJSON = generateLivesJSON(requestHost);
+            const playerJSON = generatePlayerJSON(options.configDir, requestHost);
+            const configObj = {sites_count: siteJSON.sites.length, ...siteJSON, ...parseJSON, ...livesJSON, ...playerJSON};
             // console.log(configObj);
             const configStr = JSON.stringify(configObj, null, 2);
             if (!process.env.VERCEL) { // Vercel 环境不支持写文件，关闭此功能
