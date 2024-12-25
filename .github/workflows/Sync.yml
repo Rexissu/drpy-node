@@ -14,7 +14,7 @@ jobs:
 
     - name: Sync with upstream
       run: |
-        git remote add upstream https://github.com/hjdhnx/drpy-node
+        git remote add upstream https://github.com/hjdhnx/drpy-node.git
         git fetch upstream
         git merge upstream/main
 
