@@ -2,6 +2,7 @@ import path from 'path';
 import {existsSync} from 'fs';
 import {base64Decode} from '../libs_drpy/crypto-util.js';
 import * as drpy from '../libs/drpyS.js';
+import {ENV} from "../utils/env.js";
 
 export default (fastify, options, done) => {
     // 动态加载模块并根据 query 执行不同逻辑
@@ -18,15 +19,18 @@ export default (fastify, options, done) => {
                 reply.status(404).send({error: `Module ${moduleName} not found`});
                 return;
             }
+            const method = request.method.toUpperCase();
             // 根据请求方法选择参数来源
-            const query = request.method === 'GET' ? request.query : request.body;
+            const query = method === 'GET' ? request.query : request.body;
             const protocol = request.protocol;
             const hostname = request.hostname;
             const proxyUrl = `${protocol}://${hostname}${request.url}`.split('?')[0].replace('/api/', '/proxy/') + '/?do=js';
             const publicUrl = `${protocol}://${hostname}/public/`;
+            const httpUrl = `${protocol}://${hostname}/http`;
+            const mediaProxyUrl = `${protocol}://${hostname}/mediaProxy`;
             // console.log(`proxyUrl:${proxyUrl}`);
             const env = {
-                proxyUrl, publicUrl, getProxyUrl: function () {
+                proxyUrl, publicUrl, httpUrl, mediaProxyUrl, getProxyUrl: function () {
                     return proxyUrl
                 }
             };
@@ -56,6 +60,9 @@ export default (fastify, options, done) => {
                 }
 
                 if ('ac' in query && 'ids' in query) {
+                    if (method === 'POST') {
+                        fastify.log.info(`[${moduleName}] 二级已接收post数据: ${query.ids}`);
+                    }
                     // 详情逻辑
                     const result = await drpy.detail(modulePath, env, query.ids.split(','));
                     return reply.send(result);
@@ -117,6 +124,7 @@ export default (fastify, options, done) => {
         }
         const proxyPath = request.params['*']; // 捕获整个路径
         fastify.log.info(`try proxy for ${moduleName} -> ${proxyPath}: ${JSON.stringify(query)}`);
+        const rangeHeader = request.headers.range; // 获取客户端的 Range 请求头
         const protocol = request.protocol;
         const hostname = request.hostname;
         const proxyUrl = `${protocol}://${hostname}${request.url}`.split('?')[0].replace(proxyPath, '') + '?do=js';
@@ -133,8 +141,8 @@ export default (fastify, options, done) => {
             let content = backRespList[2] || '';
             const headers = backRespList.length > 3 ? backRespList[3] : null;
             const toBytes = backRespList.length > 4 ? backRespList[4] : null;
-            // 如果需要转换为字节内容
-            if (toBytes) {
+            // 如果需要转换为字节内容(尝试base64转bytes)
+            if (toBytes === 1) {
                 try {
                     if (content.includes('base64,')) {
                         content = unescape(content.split("base64,")[1]);
@@ -143,6 +151,18 @@ export default (fastify, options, done) => {
                 } catch (e) {
                     fastify.log.error(`Local Proxy toBytes error: ${e}`);
                 }
+            }
+            // 流代理
+            else if (toBytes === 2 && content.startsWith('http')) {
+                const new_headers = {
+                    ...(headers ? headers : {}),
+                    ...(rangeHeader ? {Range: rangeHeader} : {}), // 添加 Range 请求头
+                }
+                // return proxyStreamMediaMulti(content, new_headers, request, reply); // 走  流式代理
+                // 将查询参数构建为目标 URL
+                const redirectUrl = `/mediaProxy?url=${encodeURIComponent(content)}&headers=${encodeURIComponent(new_headers)}&thread=${ENV.get('thread') || 1}`;
+                // 执行重定向
+                return reply.redirect(redirectUrl);
             }
 
             // 根据媒体类型来决定如何设置字符编码
@@ -231,5 +251,6 @@ export default (fastify, options, done) => {
             reply.status(500).send({error: `Failed to proxy jx ${jxName}: ${error.message}`});
         }
     });
+
     done();
 };

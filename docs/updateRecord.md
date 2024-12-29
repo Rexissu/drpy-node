@@ -1,5 +1,74 @@
 # drpyS更新记录
 
+### 20241229
+
+更新至V1.0.25
+
+1. 优化设置中心在海阔的样式，增加推送功能支持推送海阔数据示例
+2. 优化 `push_agent.js` 增加默认图片，增加海阔推送数据识别
+3. 从 `api.js` 文件中抽离出 `mediaProxy.js` 逻辑
+4. 优化本地多线程流代理，尝试降低出现`403` 问题的频率
+5. batchFetch也尝试增加 连接数代理降低网站连接超出后自动拒绝的概率
+6. 后端 `httpUrl` 使用独立的 `_axios` 对象，避免跟系统内 `req` 所用对象冲突
+7. 完成设置中心所有平台扫码功能
+
+### 20241228
+
+更新至V1.0.24
+
+1. 本地代理支持多线程流代理，参考设置中心的本地代理测试。默认线程数为1，可以设置中心自行修改
+2. 至臻盘新增 `原代服` `原代本` 两种画质，可选择启用代理播放功能
+3. 更新了两个源
+4. 夸克扫描功能优化，支持取消扫码
+5. 设置中心图标优化，并支持推送番茄小说
+6. 默认排序文件改为 `order_common.example.html` `order_yellow.example.html` 允许用户自己新建不带example的文件避免跟仓库冲突
+
+### 20241227
+
+更新至V1.0.23
+
+1. 更新 `searchable` `filterable` `quickSearch` 默认全部为0
+2. 优化网盘源二级失效资源处理
+3. 新增 `push_agent.js` 推送专用源，支持 各大网盘，官链，直链，待嗅探，多列表等场景推送
+4. 修复已有源三个属性没正确设置问题
+5. 增加 `蜡笔[盘].js`
+6. 设置中心支持推送
+7. drpyS新增可用函数 `XMLHttpRequest` `_fetch`,由于`fetch`是drpy2内置函数等同于`request`,新增的`_fetch`是nodejs原生函数。示例:
+
+```javascript
+const xhr = new XMLHttpRequest();
+log(xhr);
+```
+
+8. 环境this增加 `httpUrl`
+9. 设置中心增加夸克扫码功能与真实可用的逻辑
+10. action动作交互升级至最新标准，完美适配最新装逼壳
+
+### 20241226
+
+更新至V1.0.22
+
+1. 更新网盘插件 `ali.js`,修正播放失败无法自动刷新cookie问题
+2. 更新 `至臻[盘].js` 支持原画播放
+3. 夸克支持原画播放，并优化夸克和uc自动刷新cookie逻辑
+4. `random-http-ua.js` 优化 `instanceof Array` 改为 `Array.isArray` 解决传递option无法生成ua问题
+5. drpyS源模块系统升级，支持使用`.cjs`的标准commonJS模块导入使用，运行读写文件等操作。示例`_lib.request.cjs`。谨慎使用，权限比较大 在源里的示例用法:
+
+```javascript
+const fs = require('fs');
+const path = require('path');
+const absolutePath = path.resolve('./');
+console.log(absolutePath);
+const data = fs.readFileSync('./js/_360.js', 'utf8');
+console.log(data);
+const {getPublicIp1, getPublicIp2} = require('../js/_lib.request.cjs');
+console.log('typeof getPublicIp1:', typeof getPublicIp1);
+console.log('typeof getPublicIp2:', typeof getPublicIp2);
+```
+
+6. drpyS源初始化增加30秒超时返回机制(但不会中断后台任务，请确保代码不要含有死循环等操作)
+7. 研究本地代理流但是没成功，代码保留了
+
 ### 20241225
 
 更新至V1.0.21

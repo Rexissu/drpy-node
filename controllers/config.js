@@ -16,8 +16,14 @@ async function generateSiteJSON(jsDir, requestHost, sub, subFilePath) {
             valid_files = valid_files.filter(it => !(new RegExp(sub.reg || '.*')).test(it));
         }
         let sort_file = path.join(path.dirname(subFilePath), `./order_common.html`);
+        if (!existsSync(sort_file)) {
+            sort_file = path.join(path.dirname(subFilePath), `./order_common.example.html`);
+        }
         if (sub.sort) {
             sort_file = path.join(path.dirname(subFilePath), `./${sub.sort}.html`);
+            if (!existsSync(sort_file)) {
+                sort_file = path.join(path.dirname(subFilePath), `./${sub.sort}.example.html`);
+            }
         }
         if (existsSync(sort_file)) {
             console.log('sort_file:', sort_file);
@@ -34,12 +40,12 @@ async function generateSiteJSON(jsDir, requestHost, sub, subFilePath) {
     }
     for (const file of valid_files) {
         const baseName = path.basename(file, '.js'); // 去掉文件扩展名
-        const key = `drpyS_${baseName}`;
-        const name = `${baseName}(DS)`;
+        let key = `drpyS_${baseName}`;
+        let name = `${baseName}(DS)`;
         const api = `${requestHost}/api/${baseName}`;  // 使用请求的 host 地址，避免硬编码端口
         let ruleObject = {
-            searchable: 1, // 固定值
-            filterable: 1, // 固定值
+            searchable: 0, // 固定值
+            filterable: 0, // 固定值
             quickSearch: 0, // 固定值
         };
         try {
@@ -47,6 +53,10 @@ async function generateSiteJSON(jsDir, requestHost, sub, subFilePath) {
             // console.log(file, ruleObject.title);
         } catch (e) {
             console.log(`file:${file} error:${e.message}`);
+        }
+        if (baseName === 'push_agent') {
+            key = 'push_agent';
+            name = `${ruleObject.title}(DS)`;
         }
         const site = {
             key,
