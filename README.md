@@ -1,26 +1,26 @@
 # drpyS(drpy-node)
 
 nodejs作为服务端的drpy实现。全面升级异步写法  
-积极开发中，每日一更，当前进度 `20%`
+积极开发中，每日一更，当前进度 `23%`
 
-* [本地配置接口-动态本地](/config)
-* [本地配置接口-动态外网/局域网](/config/1)
+* [本地配置接口-动态本地](/config?pwd=)
+* [本地配置接口-动态外网/局域网](/config/1?pwd=)
 * [其他配置接口-订阅过滤](/docs/sub.md)
 * [代码加解密工具](/admin/encoder)
 * [V我50支付凭证生成器](/authcoder?len=10&number=1)
 * [接口压测教程](/docs/httpTest.md)
 * [央视点播解析工具](/proxy/央视大全[官]/index.html)
 * [cookie管理插件](/apps/cookie-butler/index.html)
+* [本站防止爬虫协议](/robots.txt)
 
 ## 更新记录
 
-### 20241229
+### 20241231
 
-更新至V1.0.25
+更新至V1.0.27
 
-1. 本地多线程流代理优化
-2. 设置中心功能优化
-3. 推送功能优化
+1. Ai多样化
+2. 接口授权支持
 
 [点此查看完整更新记录](docs/updateRecord.md)
 
@@ -47,6 +47,9 @@ todo:
 * [crypto-js-wasm使用教程](docs/crypto-js-wasm/readme-CN.md)
 * [puppeteer使用教程](docs/pupInstall.md)
 * [drpyS源属性说明](docs/ruleAttr.md)
+* [drpy2写源简述](docs/ruleDesc.md)
+* [讯飞星火开放平台](https://console.xfyun.cn/services/bm4)
+* [讯飞星火智能体数据集](https://xinghuo.xfyun.cn/botcenter/private-dataset)
 
 ## 问题说明
 
