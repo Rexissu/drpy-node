@@ -5,7 +5,10 @@ import {createRequire} from 'module';
 import {XMLHttpRequest} from 'xmlhttprequest';
 import path from "path";
 import vm from 'vm';
+import WebSocket, {WebSocketServer} from 'ws';
+import zlib from 'zlib';
 import '../libs_drpy/es6-extend.js'
+import {getSitesMap} from "../utils/sites-map.js";
 import * as utils from '../utils/utils.js';
 import * as misc from '../utils/misc.js';
 import COOKIE from '../utils/cookieManager.js';
@@ -36,6 +39,7 @@ import '../libs_drpy/moduleLoader.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const _data_path = path.join(__dirname, '../data');
+const _config_path = path.join(__dirname, '../config');
 
 globalThis.misc = misc;
 globalThis.utils = utils;
@@ -48,6 +52,9 @@ globalThis.Ali = Ali;
 globalThis.require = createRequire(import.meta.url);
 globalThis._fetch = fetch;
 globalThis.XMLHttpRequest = XMLHttpRequest;
+globalThis.WebSocket = WebSocket;
+globalThis.WebSocketServer = WebSocketServer;
+globalThis.zlib = zlib;
 globalThis.AIS = AIS;
 globalThis.pathLib = {
     basename: path.basename,
@@ -126,7 +133,7 @@ globalThis.simplecc = simplecc;
 
 
 export async function getSandbox(env = {}) {
-    const {getProxyUrl} = env;
+    const {getProxyUrl, hostUrl, fServer} = env;
     // (可选) 加载所有 wasm 文件
     await CryptoJSW.loadAllWasm();
     const utilsSanbox = {
@@ -143,6 +150,8 @@ export async function getSandbox(env = {}) {
         $,
         pupWebview,
         getProxyUrl,
+        hostUrl,
+        fServer,
         getContentType, getMimeType,
     };
     const drpySanbox = {
@@ -174,6 +183,7 @@ export async function getSandbox(env = {}) {
         print,
         jsonToCookie,
         cookieToJson,
+        runMain,
     };
     const drpyCustomSanbox = {
         MOBILE_UA,
@@ -255,6 +265,9 @@ export async function getSandbox(env = {}) {
         UC,
         Ali,
         require,
+        WebSocket,
+        WebSocketServer,
+        zlib,
     };
 
     // 创建一个沙箱上下文，注入需要的全局变量和函数
@@ -314,10 +327,27 @@ export async function init(filePath, env, refresh) {
         const fileContent = await readFile(filePath, 'utf-8');
         // 计算文件的 hash 值
         const fileHash = computeHash(fileContent);
+        const moduleName = path.basename(filePath, '.js');
+        let moduleExt = env.ext;
+        // log('moduleName:', moduleName);
+        // log('moduleExt:', moduleExt);
+        let SitesMap = getSitesMap(_config_path);
+        // log('SitesMap:', SitesMap);
+        if (moduleExt && SitesMap[moduleName]) {
+            try {
+                moduleExt = ungzip(moduleExt);
+            } catch (e) {
+                log(`[${moduleName}] ungzip解密moduleExt失败: ${e.message}`);
+            }
+            if (!SitesMap[moduleName].find(i => i.queryStr === moduleExt) && !SitesMap[moduleName].find(i => i.queryObject.params === moduleExt)) {
+                throw new Error("moduleExt is wrong!")
+            }
+        }
+        let hashMd5 = md5(filePath + moduleExt);
 
         // 检查缓存：是否有文件且未刷新且文件 hash 未变化
-        if (moduleCache.has(filePath) && !refresh) {
-            const cached = moduleCache.get(filePath);
+        if (moduleCache.has(hashMd5) && !refresh) {
+            const cached = moduleCache.get(hashMd5);
             if (cached.hash === fileHash) {
                 // log(`Module ${filePath} already initialized and unchanged, returning cached instance.`);
                 return cached.moduleObject;
@@ -370,7 +400,14 @@ export async function init(filePath, env, refresh) {
         // 访问沙箱中的 rule 对象。不进行deepCopy了,避免初始化或者预处理对rule.xxx进行修改后，在其他函数里使用却没生效问题
         // const moduleObject = utils.deepCopy(sandbox.rule);
         const rule = sandbox.rule;
-        await initParse(rule, vm, context);
+        if (moduleExt) { // 传了参数才覆盖rule参数，否则取rule内置
+            if (moduleExt.startsWith('../json')) {
+                rule.params = urljoin(env.jsonUrl, moduleExt.slice(8));
+            } else {
+                rule.params = moduleExt
+            }
+        }
+        await initParse(rule, env, vm, context);
         // otherScript放入到initParse去执行
 //         const otherScript = new vm.Script(`
 // globalThis.jsp = new jsoup(rule.host||'');
@@ -385,7 +422,7 @@ export async function init(filePath, env, refresh) {
         moduleObject.cost = t2 - t1;
         // console.log(`${filePath} headers:`, moduleObject.headers);
         // 缓存模块和文件的 hash 值
-        moduleCache.set(filePath, {moduleObject, hash: fileHash});
+        moduleCache.set(hashMd5, {moduleObject, hash: fileHash});
         return moduleObject;
     } catch (error) {
         console.log('Error in drpy.init:', error);
@@ -512,9 +549,25 @@ async function invokeWithInjectVars(rule, method, injectVars, args) {
             injectVars[key] = value;
         }
     });
-    let result = await method.apply(thisProxy, args);
+    let result = {};
+    let error = null;
+    try {
+        result = await method.apply(thisProxy, args);
+    } catch (e) {
+        error = e;
+    }
+    if (!['推荐'].includes(injectVars['method']) && error) {
+        throw error
+    }
     // let result = await method.apply(injectVars, args);  // 使用 apply 临时注入 injectVars 作为上下文，并执行方法
     switch (injectVars['method']) {
+        case '推荐':
+            if (error) {
+                log('error:', error);
+                error = null;
+                result = [];
+            }
+            break;
         case 'class_parse':
             result = await homeParseAfter(result, rule.类型, rule.hikerListCol, rule.hikerClassListCol, injectVars);
             break;
@@ -533,6 +586,12 @@ async function invokeWithInjectVars(rule, method, injectVars, args) {
             result = await playParseAfter(rule, result, args[1], args[0]);
             console.log(`免嗅 ${injectVars.input} 执行完毕,结果为:`, JSON.stringify(result));
             break;
+        default:
+            console.log(`invokeWithInjectVars: ${injectVars['method']}`);
+            break;
+    }
+    if (error) {
+        throw error
     }
     return result
 }
@@ -628,7 +687,7 @@ async function invokeMethod(filePath, env, method, args = [], injectVars = {}) {
     }
 }
 
-async function initParse(rule, vm, context) {
+async function initParse(rule, env, vm, context) {
     rule.host = (rule.host || '').rstrip('/');
     // 检查并执行 `hostJs` 方法
     if (typeof rule.hostJs === 'function') {
@@ -740,7 +799,7 @@ globalThis.rule_fetch_params = rule.rule_fetch_params;
     // 检查并执行 `预处理` 方法
     if (typeof rule.预处理 === 'function') {
         log('Executing 预处理...');
-        await rule.预处理();
+        await rule.预处理(env);
     }
 
     const otherScript = new vm.Script(`
@@ -1251,7 +1310,20 @@ export function getOriginalJs(js_code) {
                 return ''
             }
         },
-        // (text)=>{try {return NODERSA.decryptRSAWithPrivateKey(text, RSA.getPrivateKey(rsa_private_key).replace(/RSA /g,''), {options: {environment: "browser", encryptionScheme: 'pkcs1',b:'1024'}});} catch (e) {log(e.message);return ''}},
+        // (text) => {
+        //     try {
+        //         return NODERSA.decryptRSAWithPrivateKey(text, RSA.getPrivateKey(rsa_private_key).replace(/RSA /g, ''), {
+        //             options: {
+        //                 environment: "browser",
+        //                 encryptionScheme: 'pkcs1',
+        //                 b: '1024'
+        //             }
+        //         });
+        //     } catch (e) {
+        //         log(e.message);
+        //         return ''
+        //     }
+        // },
     ]
     let func_index = 0
     while (!current_match.test(decode_content)) {
@@ -1289,6 +1361,8 @@ export const jsEncoder = {
 };
 
 export const jsDecoder = {
+    base64Decode,
+    ungzip,
     aes_decrypt: function (data) {
         let key = CryptoJS.enc.Hex.parse("686A64686E780A0A0A0A0A0A0A0A0A0A");
         let iv = CryptoJS.enc.Hex.parse("647A797964730A0A0A0A0A0A0A0A0A0A");
@@ -1301,4 +1375,28 @@ export const jsDecoder = {
         }).toString(CryptoJS.enc.Utf8);
         return encrypted;
     },
+    rsa_decode: function (text) {
+        let rsa_private_key = 'MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCqin/jUpqM6+fgYP/oMqj9zcdHMM0mEZXLeTyixIJWP53lzJV2N2E3OP6BBpUmq2O1a9aLnTIbADBaTulTNiOnVGoNG58umBnupnbmmF8iARbDp2mTzdMMeEgLdrfXS6Y3VvazKYALP8EhEQykQVarexR78vRq7ltY3quXx7cgI0ROfZz5Sw3UOLQJ+VoWmwIxu9AMEZLVzFDQN93hzuzs3tNyHK6xspBGB7zGbwCg+TKi0JeqPDrXxYUpAz1cQ/MO+Da0WgvkXnvrry8NQROHejdLVOAslgr6vYthH9bKbsGyNY3H+P12kcxo9RAcVveONnZbcMyxjtF5dWblaernAgMBAAECggEAGdEHlSEPFmAr5PKqKrtoi6tYDHXdyHKHC5tZy4YV+Pp+a6gxxAiUJejx1hRqBcWSPYeKne35BM9dgn5JofgjI5SKzVsuGL6bxl3ayAOu+xXRHWM9f0t8NHoM5fdd0zC3g88dX3fb01geY2QSVtcxSJpEOpNH3twgZe6naT2pgiq1S4okpkpldJPo5GYWGKMCHSLnKGyhwS76gF8bTPLoay9Jxk70uv6BDUMlA4ICENjmsYtd3oirWwLwYMEJbSFMlyJvB7hjOjR/4RpT4FPnlSsIpuRtkCYXD4jdhxGlvpXREw97UF2wwnEUnfgiZJ2FT/MWmvGGoaV/CfboLsLZuQKBgQDTNZdJrs8dbijynHZuuRwvXvwC03GDpEJO6c1tbZ1s9wjRyOZjBbQFRjDgFeWs9/T1aNBLUrgsQL9c9nzgUziXjr1Nmu52I0Mwxi13Km/q3mT+aQfdgNdu6ojsI5apQQHnN/9yMhF6sNHg63YOpH+b+1bGRCtr1XubuLlumKKscwKBgQDOtQ2lQjMtwsqJmyiyRLiUOChtvQ5XI7B2mhKCGi8kZ+WEAbNQcmThPesVzW+puER6D4Ar4hgsh9gCeuTaOzbRfZ+RLn3Aksu2WJEzfs6UrGvm6DU1INn0z/tPYRAwPX7sxoZZGxqML/z+/yQdf2DREoPdClcDa2Lmf1KpHdB+vQKBgBXFCVHz7a8n4pqXG/HvrIMJdEpKRwH9lUQS/zSPPtGzaLpOzchZFyQQBwuh1imM6Te+VPHeldMh3VeUpGxux39/m+160adlnRBS7O7CdgSsZZZ/dusS06HAFNraFDZf1/VgJTk9BeYygX+AZYu+0tReBKSs9BjKSVJUqPBIVUQXAoGBAJcZ7J6oVMcXxHxwqoAeEhtvLcaCU9BJK36XQ/5M67ceJ72mjJC6/plUbNukMAMNyyi62gO6I9exearecRpB/OGIhjNXm99Ar59dAM9228X8gGfryLFMkWcO/fNZzb6lxXmJ6b2LPY3KqpMwqRLTAU/zy+ax30eFoWdDHYa4X6e1AoGAfa8asVGOJ8GL9dlWufEeFkDEDKO9ww5GdnpN+wqLwePWqeJhWCHad7bge6SnlylJp5aZXl1+YaBTtOskC4Whq9TP2J+dNIgxsaF5EFZQJr8Xv+lY9lu0CruYOh9nTNF9x3nubxJgaSid/7yRPfAGnsJRiknB5bsrCvgsFQFjJVs=';
+        return RSA.decode(text, rsa_private_key, null);
+    }
 };
+
+
+/**
+ * 执行main函数
+ * 示例  function main(text){return gzip(text)}
+ * @param main_func_code
+ * @param arg
+ */
+export async function runMain(main_func_code, arg) {
+    let mainFunc = async function () {
+        return ''
+    };
+    try {
+        eval(main_func_code + '\nmainFunc=main;');
+        return mainFunc(arg);
+    } catch (e) {
+        log(`执行main_func_code发生了错误:${e.message}`);
+        return ''
+    }
+}

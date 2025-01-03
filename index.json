@@ -1,5 +1,5 @@
 {
-  "sites_count": 40,
+  "sites_count": 45,
   "sites": [
     {
       "key": "drpyS_设置中心",
@@ -77,6 +77,26 @@
       "ext": ""
     },
     {
+      "key": "drpyS_哔哩大全[官]",
+      "name": "哔哩大全[官](DS)",
+      "type": 4,
+      "api": "http://localhost:5757/api/我的哔哩[官]",
+      "searchable": 2,
+      "filterable": 1,
+      "quickSearch": 0,
+      "ext": "H4sIAAAAAAAAA9PT088qzs/Tfzp5ytPJK58uWf60dYUeSAQAZ2A+OBkAAAA="
+    },
+    {
+      "key": "drpyS_哔哩教育[官]",
+      "name": "哔哩教育[官](DS)",
+      "type": 4,
+      "api": "http://localhost:5757/api/我的哔哩[官]",
+      "searchable": 2,
+      "filterable": 1,
+      "quickSearch": 0,
+      "ext": "H4sIAAAAAAAAA9PT088qzs/Tfzp5ytPJK59NnfmiaZMeSAQAgv7xPBkAAAA="
+    },
+    {
       "key": "drpyS_哔哩直播[官]",
       "name": "哔哩直播[官](DS)",
       "type": 4,
@@ -103,6 +123,16 @@
       "api": "http://localhost:5757/api/动作交互",
       "searchable": 0,
       "filterable": 0,
+      "quickSearch": 0,
+      "ext": ""
+    },
+    {
+      "key": "drpyS_抖音直播弹幕[官]",
+      "name": "抖音直播弹幕[官](DS)",
+      "type": 4,
+      "api": "http://localhost:5757/api/抖音直播弹幕[官]",
+      "searchable": 1,
+      "filterable": 1,
       "quickSearch": 0,
       "ext": ""
     },
@@ -211,6 +241,16 @@
       "name": "老白故事[听](DS)",
       "type": 4,
       "api": "http://localhost:5757/api/老白故事[听]",
+      "searchable": 2,
+      "filterable": 1,
+      "quickSearch": 0,
+      "ext": ""
+    },
+    {
+      "key": "drpyS_七猫小说[书]",
+      "name": "七猫小说[书](DS)",
+      "type": 4,
+      "api": "http://localhost:5757/api/七猫小说[书]",
       "searchable": 2,
       "filterable": 1,
       "quickSearch": 0,
@@ -335,6 +375,16 @@
       "filterable": 0,
       "quickSearch": 0,
       "ext": ""
+    },
+    {
+      "key": "drpyS_直播转点播[合]",
+      "name": "直播转点播[合](DS)",
+      "type": 4,
+      "api": "http://localhost:5757/api/直播转点播[合]",
+      "searchable": 1,
+      "filterable": 1,
+      "quickSearch": 0,
+      "ext": "H4sIAAAAAAAAA9PT088qzs/Tz8ksSzVKzi3WA/EAuuBHLxUAAAA="
     },
     {
       "key": "drpyS_至臻[盘]",

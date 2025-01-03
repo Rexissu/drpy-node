@@ -1,7 +1,7 @@
 # drpyS(drpy-node)
 
 nodejs作为服务端的drpy实现。全面升级异步写法  
-积极开发中，每日一更，当前进度 `23%`
+积极开发中，每日一更，当前进度 `25%`
 
 * [本地配置接口-动态本地](/config?pwd=)
 * [本地配置接口-动态外网/局域网](/config/1?pwd=)
@@ -12,15 +12,15 @@ nodejs作为服务端的drpy实现。全面升级异步写法
 * [央视点播解析工具](/proxy/央视大全[官]/index.html)
 * [cookie管理插件](/apps/cookie-butler/index.html)
 * [本站防止爬虫协议](/robots.txt)
+* [本项目主页-免翻](https://git-proxy.playdreamer.cn/hjdhnx/drpy-node)
 
 ## 更新记录
 
-### 20241231
+### 20250103
 
-更新至V1.0.27
+更新至V1.0.30
 
-1. Ai多样化
-2. 接口授权支持
+1. 增加 `抖音` `直转点`
 
 [点此查看完整更新记录](docs/updateRecord.md)
 

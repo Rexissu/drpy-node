@@ -4,9 +4,12 @@ import * as drpy from '../libs/drpyS.js';
 import {naturalSort, urljoin} from '../utils/utils.js'
 import {ENV} from "../utils/env.js";
 import {validatePwd} from "../utils/api_validate.js";
+import {getSitesMap} from "../utils/sites-map.js";
+
+const {jsEncoder} = drpy;
 
 // 工具函数：生成 JSON 数据
-async function generateSiteJSON(jsDir, requestHost, sub, subFilePath, pwd) {
+async function generateSiteJSON(jsDir, configDir, requestHost, sub, subFilePath, pwd) {
     const files = readdirSync(jsDir);
     let valid_files = files.filter((file) => file.endsWith('.js') && !file.startsWith('_')); // 筛选出不是 "_" 开头的 .js 文件
     let sort_list = [];
@@ -39,10 +42,11 @@ async function generateSiteJSON(jsDir, requestHost, sub, subFilePath, pwd) {
     if (ENV.get('hide_adult') === '1') {
         valid_files = valid_files.filter(it => !(new RegExp('\\[[密]\\]|密+')).test(it));
     }
-    for (const file of valid_files) {
+    let SitesMap = getSitesMap(configDir);
+    // console.log(SitesMap);
+    // 使用 Promise.all 并发执行文件的处理
+    const filePromises = valid_files.map(async (file) => {
         const baseName = path.basename(file, '.js'); // 去掉文件扩展名
-        let key = `drpyS_${baseName}`;
-        let name = `${baseName}(DS)`;
         let api = `${requestHost}/api/${baseName}`;  // 使用请求的 host 地址，避免硬编码端口
         if (pwd) {
             api += `?pwd=${pwd}`;
@@ -58,23 +62,48 @@ async function generateSiteJSON(jsDir, requestHost, sub, subFilePath, pwd) {
         } catch (e) {
             console.log(`file:${file} error:${e.message}`);
         }
+        let fileSites = [];
         if (baseName === 'push_agent') {
-            key = 'push_agent';
-            name = `${ruleObject.title}(DS)`;
+            let key = 'push_agent';
+            let name = `${ruleObject.title}(DS)`;
+            fileSites.push({key, name})
+        } else if (SitesMap.hasOwnProperty(baseName) && Array.isArray(SitesMap[baseName])) {
+            SitesMap[baseName].forEach((it) => {
+                let key = `drpyS_${it.alias}`;
+                let name = `${it.alias}(DS)`;
+                let ext = '';
+                if (it.queryObject.type === 'url') {
+                    ext = it.queryObject.params;
+                } else {
+                    ext = it.queryStr;
+                }
+                if (ext) {
+                    ext = jsEncoder.gzip(ext);
+                }
+                fileSites.push({key: key, name: name, ext: ext})
+            });
+        } else {
+            let key = `drpyS_${baseName}`;
+            let name = `${baseName}(DS)`;
+            fileSites.push({key, name})
         }
-        const site = {
-            key,
-            name,
-            type: 4, // 固定值
-            api,
-            searchable: ruleObject.searchable,
-            filterable: ruleObject.filterable,
-            quickSearch: ruleObject.quickSearch,
-            more: ruleObject.more,
-            ext: "", // 固定为空字符串
-        };
-        sites.push(site);
-    }
+        fileSites.forEach((fileSite) => {
+            const site = {
+                key: fileSite.key,
+                name: fileSite.name,
+                type: 4, // 固定值
+                api,
+                searchable: ruleObject.searchable,
+                filterable: ruleObject.filterable,
+                quickSearch: ruleObject.quickSearch,
+                more: ruleObject.more,
+                ext: fileSite.ext || "", // 固定为空字符串
+            };
+            sites.push(site);
+        });
+    });
+    // 等待所有的文件处理完成
+    await Promise.all(filePromises);
     sites = naturalSort(sites, 'name', sort_list);
     return {sites};
 }
@@ -208,7 +237,7 @@ export default (fastify, options, done) => {
                 }
             }
 
-            const siteJSON = await generateSiteJSON(options.jsDir, requestHost, sub, options.subFilePath, pwd);
+            const siteJSON = await generateSiteJSON(options.jsDir, options.configDir, requestHost, sub, options.subFilePath, pwd);
             const parseJSON = generateParseJSON(options.jxDir, requestHost);
             const livesJSON = generateLivesJSON(requestHost);
             const playerJSON = generatePlayerJSON(options.configDir, requestHost);
@@ -222,8 +251,10 @@ export default (fastify, options, done) => {
                 }
             }
             let t2 = (new Date()).getTime();
-            configObj.cost = t2 - t1;
-            reply.send(configObj);
+            let cost = t2 - t1;
+            // configObj.cost = cost;
+            // reply.send(configObj);
+            reply.send(Object.assign({cost}, configObj));
         } catch (error) {
             reply.status(500).send({error: 'Failed to generate site JSON', details: error.message});
         }
