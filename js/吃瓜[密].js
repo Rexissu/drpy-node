@@ -75,10 +75,10 @@ const rule = {
     一级: async function (tid, pg, filter, extend) {
         let {getProxyUrl, input, MY_CATE} = this
         let d = [];
-        let html = await requestHtml(`${rule.host}${tid.replace('.html', '')}/${pg}`, {
+        let html = await requestHtml(`${rule.host}${tid}${pg}`, {
             headers: rule.headers
         });
-        let list = pdfa(html, '.video-item');
+        let list = pdfa(html, '.joe_archive__list joe_list&&li&&a');
         list.forEach(item => {
             const pic = pdfh(item, 'img&&onload').match(/'(.*?)'/)[1];
             const url = pdfh(item, 'a&&href');
