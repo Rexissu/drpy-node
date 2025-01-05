@@ -3834,8 +3834,10 @@ if (!window.byted_acrawler) {
                         if (null == _0x5142ff)
                             throw _0x1f977a;
                         return _0x5142ff[_0x30639a(0x2ac)] === ArrayBuffer && (_0x5142ff = new Uint8Array(_0x5142ff)),
-                            Array[_0x30639a(0x2af)](_0x5142ff) || ArrayBuffer[_0x30639a(0x2c7)](_0x5142ff) || _0x5142ff[_0x30639a(0x2ac)] === _0x5bfe7e ? _0x3e0a6e[_0x30639a(0x1ca)](_0x30639a(0x35c))['update'](new _0x5bfe7e(_0x5142ff))[_0x30639a(0x19b)](_0x30639a(0x352)) : _0x1afe1b(_0x5142ff);
+                            Array[_0x30639a(0x2af)](_0x5142ff) || ArrayBuffer[_0x30639a(0x2c7)](_0x5142ff) || _0x5142ff[_0x30639a(0x2ac)] === _0x5bfe7e ? _0x3e0a6e[_0x30639a(0x1ca)](_0x30639a(0x35c))['update'](_0x5bfe7e.from(_0x5142ff))[_0x30639a(0x19b)](_0x30639a(0x352)) : _0x1afe1b(_0x5142ff);
                     };
+                    // new Buffer(data) 改成 Buffer.from(data)
+                    // console.log('_0x5bfe7e:',_0x5bfe7e);
                     return _0x3d7396;
                 };
 
@@ -7010,8 +7012,9 @@ function get_sign(md5) {
     return crawler(data)["X-Bogus"];
 }
 
-function getDmHtml(hostUrl) {
-    return pathLib.readFile('./douyin/danmu.html').replace('localhost', hostUrl);
+function getDmHtml(hostname) {
+    let htmlContent = pathLib.readFile('./douyin/danmu.html');
+    return jinja.render(htmlContent, {hostname});
 }
 
 module.exports = {
