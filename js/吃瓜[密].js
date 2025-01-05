@@ -1,7 +1,7 @@
 const {requestHtml} = $.require('./_lib.request.js');
 
 const rule = {
-    title: '黑料不打烊[密]',
+    title: '吃瓜[密]',
     host: 'https://h4dez1.vojrq1.net',
     url: '/category/fyclass/fypage',
     searchUrl: '/index/search_article?word=**&page=fypage',
@@ -20,6 +20,9 @@ const rule = {
         for (const it of $(".joe_header__above-nav a")) {
             const name = it.attribs.title
             const href = it.attribs.href
+            if (name === "官方公告") {
+            break;
+        }
             classes.push({
                 type_id: href,
                 type_name: name
@@ -59,34 +62,20 @@ const rule = {
             // input = [200, 'text/plain', data];
         }
     },
-    hostJs: async function () {
-        let {HOST} = this;
-        let url = 'https://mgj.uzrpy.com';
-        try {
-            let html = await requestHtml(HOST);
-            if (html) {
-                return 'https://' + pdfh(html, ".box-wrap&&a&&href").split('/')[2];
-            } else {
-                return url
-            }
-        } catch (e) {
-            return url;
-        }
-    },
     预处理: async function () {
         rule.cate_exclude = '';
     },
     推荐: async () => {
         return []
     },
-    推荐: async function () {
-        let 一级 = rule.一级.bind(this);
-        return await 一级('/category/0.html', '1');
-    },
+    //推荐: async function () {
+       // let 一级 = rule.一级.bind(this);
+    //    return await 一级('/category/0.html', '1');
+   // },
     一级: async function (tid, pg, filter, extend) {
         let {getProxyUrl, input, MY_CATE} = this
         let d = [];
-        let html = await requestHtml(`${rule.host}${tid.replace('.html', '')}/${pg}.html`, {
+        let html = await requestHtml(`${rule.host}${tid.replace('.html', '')}/${pg}`, {
             headers: rule.headers
         });
         let list = pdfa(html, '.video-item');
