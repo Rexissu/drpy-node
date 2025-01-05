@@ -1,9 +1,9 @@
 const {requestHtml} = $.require('./_lib.request.js');
 
 const rule = {
-    title: '吃瓜[密]',
+    title: '黑料不打烊[密]',
     host: 'https://h4dez1.vojrq1.net',
-    url: '/category/fyclass/fypage.html',
+    url: '/category/fyclass/fypage',
     searchUrl: '/index/search_article?word=**&page=fypage',
     searchable: 1,
     quickSearch: 0,
@@ -17,12 +17,12 @@ const rule = {
         });
         let classes = []
         const $ = pq(html)
-        for (const it of $(".slider-content a")) {
-            const name = $(it).find('span:first')[0]
+        for (const it of $(".joe_header__above-nav a")) {
+            const name = it.attribs.title
             const href = it.attribs.href
             classes.push({
-                type_id: href === '/' ? '/category/0.html' : href,
-                type_name: name.children[0].data
+                type_id: href === '/' ? '/category/0' : href,
+                type_name: name
             })
         }
         return {
