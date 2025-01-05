@@ -2,7 +2,7 @@ const {requestHtml} = $.require('./_lib.request.js');
 
 const rule = {
     title: '吃瓜[密]',
-    host: 'https://hl49.co',
+    host: 'https://h4dez1.vojrq1.net',
     url: '/category/fyclass/fypage.html',
     searchUrl: '/index/search_article?word=**&page=fypage',
     searchable: 1,
