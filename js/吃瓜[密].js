@@ -21,7 +21,7 @@ const rule = {
             const name = it.attribs.title
             const href = it.attribs.href
             classes.push({
-                type_id: href === '/' ? '/category/0' : href,
+                type_id: href,
                 type_name: name
             })
         }
