@@ -1,5 +1,91 @@
 # drpyS更新记录
 
+### 20250109
+
+更新至V1.1.5
+
+1. `.env` 增加 `MAX_TASK`参数，配置系统多任务数限制，默认不设置则为2，解决低端设备如arm盒子访问配置崩溃问题。高端设备实测发现设置为8比较快
+2. 自建解析功能增强，支持自定义其他参数，增加两个示例解析
+3. 抓取了一些采集源扩充采王，抓取方式，zy3.7版本运行以下代码
+
+```javascript
+var rule = {
+    推荐: $js.toString(() => {
+        let url = 'https://blog.ilol.top/p/zqgwes.html';
+        let html = request(url);
+        let tlist = pdfa(html, '.post-content&&h2');
+        log(tlist)
+        let alist = pdfa(html, '.post-content&&a:gt(0)');
+        log(alist);
+
+        VODS = [];
+
+        for (let i in tlist) {
+            VODS.push({
+                name: pdfh(tlist[i], 'Text'),
+                url: pdfh(alist[i], 'a&&href'),
+            })
+        }
+        log(JSON.stringify(VODS))
+
+    })
+}
+```
+
+4. 增加源 `奇珍异兽[官].js`
+5. 新增一个源 `hdmoli.js` 用于演示二级同时存在播放列表和网盘分享链接的写法
+
+### 20250108
+
+更新至V1.1.4
+
+1. 修改 `fastify` 全局 `query` 解析行为，避免同一个参数出现多次被解析成列表，比如extend参数。
+2. 主页增加版权说明和免责申明
+3. 自然排序逻辑改成包含，用于支持模糊排序功能(v我50限定功能)
+4. 设置中心全局动作新增 `推送`
+5. ds源增加可用的全局函数 `batchExecute` 用法同海阔，配置生成逻辑改成 batchExecute 执行
+
+### 20250107
+
+更新至V1.1.3
+
+1. 修复 `req` 系列函数获取源码由于没有请求头没有默认 `accept` 属性导致的某些网页获取的源码异常问题
+2. 推送及各个网盘播放的夸克代理线程数绑定设置中心播放线程代理的值，默认为6
+3. 修复js版打包7z脚本命令的日期不正确问题
+4. 增加源 `秋霞电影网.js`
+5. 增加源 `小米[盘].js` 用于演示 `push://` 推送写法
+6. 推送源支持 `www.aliyundrive.com` 这种地址的拦截
+7. lazy执行失败后自动执行嗅探机制调整,仅限于http开头的链接
+
+`小米[盘].js` 使用说明:
+海阔待改推送 增加编码 `encodeURIComponent`
+
+```javascript
+log(detail);
+let state = post(s + 'action', {
+    timeout: 2000,
+    body: {
+        do: 'push',
+        url: encodeURIComponent(JSON.stringify(detail))
+    },
+    headers: {
+        'User-Agent': MOBILE_UA
+    },
+});
+```
+
+装逼壳待改，接受海阔推送json数据时对url数据进行url解码。然后才是判断解析json  
+push:// 选集无法播放，待改
+
+### 20250106
+
+更新至V1.1.2
+
+1. 修复 `动漫巴士[漫].js`
+2. 重写 `req` 方法，使之支持 `request` 使用时支持字符串解码功能,支持 `gbk`等类型的网站数据，与之对应的源 `九七电影网.js`
+3. ds推送兼容装逼壳新增推送相关属性 `vod_play_flag` `vod_play_index` `vod_play_position`
+4. 增加源 `光速[优].js`
+
 ### 20250105
 
 更新至V1.1.1

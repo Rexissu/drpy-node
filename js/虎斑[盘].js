@@ -20,6 +20,9 @@ var rule = {
     cate_exclude: '网址|专题|全部影片',
     tab_rename: {'KUAKE1': '夸克1', 'KUAKE11': '夸克2', 'YOUSEE1': 'UC1', 'YOUSEE11': 'UC2',},
     play_parse: true,
+    searchable: 1,
+    filterable: 1,
+    quickSearch: 0,
     class_name: '电影&剧集&动漫&综艺&短剧&4K',
     class_url: '1&2&4&3&6&5',
     class_parse: async () => {
@@ -136,8 +139,8 @@ var rule = {
             };
             urls.push("原画", down.download_url + '#fastPlayMode##threads=10#')
             // http://ip:port/?thread=线程数&form=url与header编码格式&url=链接&header=所需header
-            urls.push("原代服", mediaProxyUrl + '?thread=6&form=urlcode&randUa=1&url=' + encodeURIComponent(down.download_url) + '&header=' + encodeURIComponent(JSON.stringify(headers)))
-            urls.push("原代本", 'http://127.0.0.1:7777/?thread=6&form=urlcode&randUa=1&url=' + encodeURIComponent(down.download_url) + '&header=' + encodeURIComponent(JSON.stringify(headers)))
+            urls.push("原代服", mediaProxyUrl + `?thread=${ENV.get('thread') || 6}&form=urlcode&randUa=1&url=` + encodeURIComponent(down.download_url) + '&header=' + encodeURIComponent(JSON.stringify(headers)))
+            urls.push("原代本", `http://127.0.0.1:7777/?thread=${ENV.get('thread') || 6}&form=urlcode&randUa=1&url=` + encodeURIComponent(down.download_url) + '&header=' + encodeURIComponent(JSON.stringify(headers)))
             const transcoding = (await Quark.getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
             transcoding.forEach((t) => {
                 urls.push(t.resolution === 'low' ? "流畅" : t.resolution === 'high' ? "高清" : t.resolution === 'super' ? "超清" : t.resolution, t.video_info.url)

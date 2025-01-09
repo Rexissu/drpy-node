@@ -132,3 +132,6 @@ dist
 !README.md
 .idea
 /config/env.json
+/js/UC分享.js
+/json/UC分享.json
+/jx/奇奇.js
