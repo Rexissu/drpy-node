@@ -3,7 +3,7 @@ const {requestHtml} = $.require('./_lib.request.js');
 const rule = {
     title: '吃瓜[密]',
     host: 'https://h4dez1.vojrq1.net',
-    url: '/category/fyclass/fypage',
+    url: 'fyclass/fypage',
     searchUrl: '/index/search_article?word=**&page=fypage',
     searchable: 1,
     quickSearch: 0,
