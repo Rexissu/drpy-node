@@ -21,7 +21,7 @@ const rule = {
             const name = it.attribs.title
             const href = it.attribs.href
             if (name === "官方公告") {
-            break;
+            continue;
         }
             classes.push({
                 type_id: href,
@@ -75,7 +75,7 @@ const rule = {
     一级: async function (tid, pg, filter, extend) {
         let {getProxyUrl, input, MY_CATE} = this
         let d = [];
-        let html = await requestHtml(`${rule.host}${tid}${pg}`, {
+        let html = await requestHtml(input, {
             headers: rule.headers
         });
         let list = pdfa(html, '.joe_archive__list joe_list&&li&&a');
