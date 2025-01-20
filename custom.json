@@ -1,5 +1,5 @@
 {
-  "sites_count": 92,
+  "sites_count": 93,
   "sites": [
     {
       "key": "drpyS_设置中心",
@@ -332,6 +332,16 @@
       "filterable": 1,
       "quickSearch": 0,
       "ext": "H4sIAAAAAAAAA9PT088qzs/Tfzp5ytPJK58uWf60dYUeSAQAZ2A+OBkAAAA="
+    },
+    {
+      "key": "drpyS_哔哩大杂烩[官]",
+      "name": "哔哩大杂烩[官](DS)",
+      "type": 4,
+      "api": "http://localhost:5757/api/我的哔哩[官]",
+      "searchable": 2,
+      "filterable": 1,
+      "quickSearch": 0,
+      "ext": "H4sIAAAAAAAAA9PT088qzs/Tfzp5ytPJK58uWf5sbtPz5pV6IEEAolZcGBwAAAA="
     },
     {
       "key": "drpyS_抖音直播弹幕[官]",
