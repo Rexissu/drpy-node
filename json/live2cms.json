@@ -30,6 +30,17 @@
     "img": "https://image11.m1905.cn/uploadfile/2022/0510/thumb_1_285_100_20220510030520666149.jpg"
   },
   {
+    "name": "咪咕M3U",
+    "url": "https://www.freetv.top/migu.m3u",
+    "img": ""
+  },
+  {
+    "name": "开源IPTV",
+    "url": "../proxy/iptv/live",
+    "img": "",
+    "headers": {"user-agent":"com.stub.StubApp/1.5.1 (Linux;Android 13) AndroidXMedia3/1.4.1"}
+  },
+  {
     "name": "测试1(随时失效)",
     "url": "https://gitee.com/svcd2008/tv/raw/master/430.txt",
     "img": "./lives.jpg"

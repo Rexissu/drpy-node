@@ -28,6 +28,7 @@ var rule = {
             vod_content: orId || '温馨提醒:宝子们，推送的时候记得确保ids存在哟~',
             vod_name: 'DS推送:道长&秋秋倾情打造',
         }
+        let playPans = [];
         if (/^[\[{]/.test(input.trim())) {
             try {
                 let push_vod = JSON.parse(input);
@@ -57,6 +58,7 @@ var rule = {
             for (let i = 0; i < list.length; i++) {
                 if (/pan.quark.cn|drive.uc.cn|www.alipan.com|www.aliyundrive.com|cloud.189.cn|yun.139.com/.test(list[i])) {
                     if (/pan.quark.cn/.test(list[i])) {
+                        playPans.push(list[i]);
                         const shareData = Quark.getShareData(list[i]);
                         if (shareData) {
                             const videos = await Quark.getFilesByShareUrl(shareData);
@@ -73,6 +75,7 @@ var rule = {
                         }
                     }
                     if (/drive.uc.cn/.test(list[i])) {
+                        playPans.push(list[i]);
                         const shareData = UC.getShareData(list[i]);
                         if (shareData) {
                             const videos = await UC.getFilesByShareUrl(shareData);
@@ -89,6 +92,7 @@ var rule = {
                         }
                     }
                     if (/www.alipan.com|www.aliyundrive.com/.test(list[i])) {
+                        playPans.push(list[i]);
                         const shareData = Ali.getShareData(list[i]);
                         if (shareData) {
                             const videos = await Ali.getFilesByShareUrl(shareData);
@@ -106,6 +110,7 @@ var rule = {
                         }
                     }
                     if (/cloud.189.cn/.test(list[i])) {
+                        playPans.push(list[i]);
                         let data = await Cloud.getShareData(list[i])
                         Object.keys(data).forEach(it => {
                             playform.push('Cloud-' + it)
@@ -114,6 +119,7 @@ var rule = {
                         })
                     }
                     if (/yun.139.com/.test(list[i])) {
+                        playPans.push(list[i]);
                         let data = await Yun.getShareData(list[i])
                         Object.keys(data).forEach(it => {
                             playform.push('Yun-' + it)
@@ -128,6 +134,7 @@ var rule = {
             }
         } else if (/pan.quark.cn|drive.uc.cn|www.alipan.com|www.aliyundrive.com|cloud.189.cn|yun.139.com/.test(input)) {
             if (/pan.quark.cn/.test(input)) {
+                playPans.push(input);
                 const shareData = Quark.getShareData(input);
                 if (shareData) {
                     const videos = await Quark.getFilesByShareUrl(shareData);
@@ -144,6 +151,7 @@ var rule = {
                 }
             }
             if (/drive.uc.cn/.test(input)) {
+                playPans.push(input);
                 const shareData = UC.getShareData(input);
                 if (shareData) {
                     const videos = await UC.getFilesByShareUrl(shareData);
@@ -160,6 +168,7 @@ var rule = {
                 }
             }
             if (/www.alipan.com|www.aliyundrive.com/.test(input)) {
+                playPans.push(input);
                 const shareData = Ali.getShareData(input);
                 if (shareData) {
                     const videos = await Ali.getFilesByShareUrl(shareData);
@@ -177,6 +186,7 @@ var rule = {
                 }
             }
             if (/cloud.189.cn/.test(input)) {
+                playPans.push(input);
                 let data = await Cloud.getShareData(input)
                 Object.keys(data).forEach(it => {
                     playform.push('Cloud-' + it)
@@ -185,6 +195,7 @@ var rule = {
                 })
             }
             if (/yun.139.com/.test(input)) {
+                playPans.push(input);
                 let data = await Yun.getShareData(input)
                 Object.keys(data).forEach(it => {
                     playform.push('Yun-' + it)
@@ -198,6 +209,7 @@ var rule = {
         }
         vod.vod_play_from = playform.join("$$$")
         vod.vod_play_url = playurls.join("$$$")
+        vod.vod_play_pan = playPans.join("$$$")
         return vod
     },
     lazy: async function (flag, id, flags) {
@@ -226,7 +238,11 @@ var rule = {
                 };
                 urls.push("原画", down.download_url + '#fastPlayMode##threads=10#');
                 urls.push("原代服", mediaProxyUrl + `?thread=${ENV.get('thread') || 6}&form=urlcode&randUa=1&url=` + encodeURIComponent(down.download_url) + '&header=' + encodeURIComponent(JSON.stringify(headers)));
-                urls.push("原代本", `http://127.0.0.1:7777/?thread=${ENV.get('thread') || 6}&form=urlcode&randUa=1&url=` + encodeURIComponent(down.download_url) + '&header=' + encodeURIComponent(JSON.stringify(headers)));
+                if (ENV.get('play_local_proxy_type', '1') === '2') {
+                    urls.push("原代本", `http://127.0.0.1:7777/?thread=${ENV.get('thread') || 6}&form=urlcode&randUa=1&url=` + encodeURIComponent(down.download_url) + '&header=' + encodeURIComponent(JSON.stringify(headers)));
+                } else {
+                    urls.push("原代本", `http://127.0.0.1:5575/proxy?thread=${ENV.get('thread') || 6}&chunkSize=256&url=` + encodeURIComponent(down.download_url));
+                }
                 const transcoding = (await Quark.getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
                 transcoding.forEach((t) => {
                     urls.push(t.resolution === 'low' ? "流畅" : t.resolution === 'high' ? "高清" : t.resolution === 'super' ? "超清" : t.resolution, t.video_info.url)

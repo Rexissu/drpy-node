@@ -104,6 +104,7 @@ var rule = {
         }
         let playform = []
         let playurls = []
+        let playPans = [];
         let post_id = input.split('/')[3].replace('.html', '')
 
         let data = qs.stringify({
@@ -160,6 +161,7 @@ var rule = {
         }
         for (const link of urls) {
             if (/pan.quark.cn/.test(link)) {
+                playPans.push(link);
                 const shareData = Quark.getShareData(link);
                 if (shareData) {
                     const videos = await Quark.getFilesByShareUrl(shareData);
@@ -176,6 +178,7 @@ var rule = {
                 }
             }
             if (/drive.uc.cn/.test(link)) {
+                playPans.push(link);
                 const shareData = UC.getShareData(link);
                 if (shareData) {
                     const videos = await UC.getFilesByShareUrl(shareData);
@@ -192,6 +195,7 @@ var rule = {
                 }
             }
             if (/www.alipan.com/.test(link)) {
+                playPans.push(link);
                 const shareData = Ali.getShareData(link);
                 if (shareData) {
                     const videos = await Ali.getFilesByShareUrl(shareData);
@@ -211,6 +215,7 @@ var rule = {
         }
         vod.vod_play_from = playform.join("$$$")
         vod.vod_play_url = playurls.join("$$$")
+        vod.vod_play_pan = playPans.join("$$$")
         return vod
     },
     搜索: async function (wd, quick, pg) {
@@ -245,7 +250,7 @@ var rule = {
         return videos
     },
     lazy: async function (flag, id, flags) {
-        let {getProxyUrl, input} = this;
+        let {getProxyUrl, input,mediaProxyUrl} = this;
         const ids = input.split('*');
         const urls = [];
         const headers = []
@@ -256,8 +261,19 @@ var rule = {
         if (flag.startsWith('Quark-')) {
             console.log("夸克网盘解析开始")
             const down = await Quark.getDownload(ids[0], ids[1], ids[2], ids[3], true);
-            // urls.push("go原画代理",'http://127.0.0.1:7777/?thread=20&url='+down.download_url)
+            const headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                'origin': 'https://pan.quark.cn',
+                'referer': 'https://pan.quark.cn/',
+                'Cookie': Quark.cookie
+            };
             urls.push("原画", down.download_url + '#fastPlayMode##threads=10#')
+            urls.push("原代服", mediaProxyUrl + `?thread=${ENV.get('thread') || 6}&form=urlcode&randUa=1&url=` + encodeURIComponent(down.download_url) + '&header=' + encodeURIComponent(JSON.stringify(headers)))
+            if (ENV.get('play_local_proxy_type', '1') === '2') {
+                urls.push("原代本", `http://127.0.0.1:7777/?thread=${ENV.get('thread') || 6}&form=urlcode&randUa=1&url=` + encodeURIComponent(down.download_url) + '&header=' + encodeURIComponent(JSON.stringify(headers)));
+            } else {
+                urls.push("原代本", `http://127.0.0.1:5575/proxy?thread=${ENV.get('thread') || 6}&chunkSize=256&url=` + encodeURIComponent(down.download_url));
+            }
             const transcoding = (await Quark.getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
             transcoding.forEach((t) => {
                 urls.push(t.resolution === 'low' ? "流畅" : t.resolution === 'high' ? "高清" : t.resolution === 'super' ? "超清" : t.resolution, t.video_info.url)
@@ -265,12 +281,7 @@ var rule = {
             return {
                 parse: 0,
                 url: urls,
-                header: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-                    'origin': 'https://pan.quark.cn',
-                    'referer': 'https://pan.quark.cn/',
-                    'Cookie': Quark.cookie
-                }
+                header: headers
             }
         }
         if (flag.startsWith('UC-')) {
