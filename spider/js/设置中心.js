@@ -35,7 +35,8 @@
         action: '{\'actionId\':\'玩偶域名\',\'id\':\'domain\',\'type\':\'input\',\'width\':450,\'title\':\'玩偶域名\',\'tip\':\'请输入玩偶域名\',\'value\':\'\',\'msg\':\'选择或输入使用的域名\',\'selectData\':\'1:=https://www.wogg.net/,2:=https://wogg.xxooo.cf/,3:=https://wogg.888484.xyz/,4:=https://www.wogg.bf/,5:=https://woggapi.333232.xyz/\'}'
       }
     ]
-  }
+  },
+  lang: 'ds'
 })
 */
 
@@ -360,10 +361,13 @@ var rule = {
 
                 d.push(genMultiInput('play_proxy_mode', '设置播放代理模式', '默认为1，可自行配置成其他值如:2 (1 内存加速,2 磁盘加速 其他:内存加速)', images.settings));
                 d.push(getInput('get_play_proxy_mode', '查看播放代理模式', images.settings));
-                d.push(genMultiInput('enable_dr2', '设置drpy2源启用状态', '设置为1可启用此功能(默认没设置也属于启动，设置其他值关闭)', images.settings));
+                d.push(genMultiInput('enable_dr2', '设置drpy2源启用状态', '设置为1启用drpy2脚本服务，需要壳子内置处理；设置为2启用drpy2在线接口服务(默认2，设置其他值关闭)', images.settings));
                 d.push(getInput('get_enable_dr2', '查看drpy2源启用状态', images.settings));
                 d.push(genMultiInput('enable_py', '设置py源启用状态', '设置为1可启用此功能(默认没设置也属于启动，设置其他值关闭)', images.settings));
                 d.push(getInput('get_enable_py', '查看py源启用状态', images.settings));
+                d.push(genMultiInput('enable_cat', '设置cat源启用状态', '设置为1可启用此功能,设置为2启用T4(默认没设置也属于启动，设置其他值关闭)', images.settings));
+                d.push(getInput('get_enable_cat', '查看cat源启用状态', images.settings));
+
                 d.push(genMultiInput('now_ai', '设置当前AI', '1: 讯飞星火 2:deepseek 3.讯飞智能体 4.Kimi \n如果不填，连续对话默认使用讯飞星火', images.settings));
                 d.push(getInput('get_now_ai', '查看当前AI', images.settings));
                 d.push(genMultiInput('allow_forward', '设置允许代理转发', '设置为1可启用此功能，有一定的使用场景用于突破网络限制', images.settings));
@@ -416,14 +420,14 @@ var rule = {
         let {input, orId, getProxyUrl} = this;
         // log(input, orId);
         if (orId === 'proxyStream') {
-            let media_url = 'https://vdse.bdstatic.com//628ca08719cef5987ea2ae3c6f0d2386.mp4';
+            let media_url = 'https://vdse.bdstatic.com/628ca08719cef5987ea2ae3c6f0d2386.mp4';
             let m3u8_url = 'http://kjsp.aikan.miguvideo.com/PLTV/88888888/224/3221236432/1.m3u8';
             return {
                 vod_id: 'proxyStream',
                 vod_name: '测试代理流',
                 vod_play_from: 'drpyS本地流代理',
-                // vod_play_url: '测试播放流$' + getProxyUrl().replace('?do=js', media_url) + '#不代理直接播$' + media_url + '#8k播放$' + m3u8_url,
-                vod_play_url: '测试播放流$' + getProxyUrl().replace('?do=js', media_url) + '#不代理直接播$' + media_url
+                // vod_play_url: '测试播放流$' + getProxyUrl().split('?')[0] + media_url + '#不代理直接播$' + media_url + '#8k播放$' + m3u8_url,
+                vod_play_url: '测试播放流$' + getProxyUrl().split('?')[0] + media_url + '#不代理直接播$' + media_url
             }
         }
     },
@@ -1044,6 +1048,7 @@ var rule = {
             'play_proxy_mode',
             'enable_dr2',
             'enable_py',
+            'enable_cat',
             'enable_rule_name',
             'spark_ai_authKey',
             'deepseek_apiKey',
@@ -1072,6 +1077,7 @@ var rule = {
             'get_play_proxy_mode',
             'get_enable_dr2',
             'get_enable_py',
+            'get_enable_cat',
             'get_enable_rule_name',
             'get_spark_ai_authKey',
             'get_deepseek_apiKey',

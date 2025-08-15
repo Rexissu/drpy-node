@@ -8,6 +8,8 @@ import decoderController from './decoder.js';
 import authCoderController from './authcoder.js';
 import webController from './web.js';
 import httpController from './http.js';
+// import taskController from './tasker.js';
+import cronTaskerController from './cron-tasker.js';
 
 export const registerRoutes = (fastify, options) => {
     fastify.register(docsController, options);
@@ -20,4 +22,6 @@ export const registerRoutes = (fastify, options) => {
     fastify.register(authCoderController, options);
     fastify.register(webController, options);
     fastify.register(httpController, options);
+    // fastify.register(taskController, options);
+    fastify.register(cronTaskerController, options);
 };

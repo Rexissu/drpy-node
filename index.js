@@ -19,6 +19,8 @@ const jsonDir = path.join(__dirname, 'json');
 const jsDir = path.join(__dirname, 'spider/js');
 const dr2Dir = path.join(__dirname, 'spider/js_dr2');
 const pyDir = path.join(__dirname, 'spider/py');
+const catDir = path.join(__dirname, 'spider/catvod');
+const xbpqDir = path.join(__dirname, 'spider/xbpq');
 
 // 静态资源
 fastify.register(fastifyStatic, {
@@ -57,6 +59,12 @@ fastify.register(fastifyStatic, {
             res.setHeader('Content-Type', 'text/plain; charset=utf-8')
         }
     }
+});
+
+fastify.register(fastifyStatic, {
+    root: catDir,
+    prefix: '/cat/', // 新的访问路径前缀
+    decorateReply: false, // 禁用 sendFile
 });
 
 // 注册插件以支持 application/x-www-form-urlencoded
@@ -100,6 +108,8 @@ registerRoutes(fastify, {
     jsDir: jsDir,
     dr2Dir: dr2Dir,
     pyDir: pyDir,
+    catDir: catDir,
+    xbpqDir: xbpqDir,
     viewsDir: path.join(__dirname, 'views'),
     configDir: path.join(__dirname, 'config'),
     PORT,
@@ -161,7 +171,7 @@ const start = async () => {
 // 停止服务
 const stop = async () => {
     try {
-        await fastify.close(); // 关闭服务器
+        await fastify.server.close(); // 关闭服务器
         console.log('Server stopped gracefully');
     } catch (err) {
         fastify.log.error('Error while stopping the server:', err);

@@ -1,5 +1,103 @@
 # drpyS更新记录
 
+### 20250814
+
+更新至V1.2.11
+
+1. 定时任务 增加 `QQ邮箱` 的消息推送方式
+2. `cat源` 增加调试模式，但是不支持 `getProxyUrl` 等方法，需要在环境变量.env文件里启用 `CAT_DEBUG=1`。
+   详情参考 [猫源调试教程](/docs/catDebug.md)
+3. `getProxyUrl` 换成 `getProxy`，兼容T3猫源使用壳子的本地代理,修复 `央视大全` 错误的本地代理获取
+4. 修复`番茄小说` 的正文阅读和搜索。分类接口坏的没能力修。央视最新视频高清下载方案目前只有通过 [`CCTV-GO`](https://wwvy.lanzouo.com/ieEq533kiofe) 包含的 `cbox.exe` 本地解密，无法适配本项目。
+
+### 20250813
+
+更新至V1.2.10
+
+1. 调整首页的文档超链接，定时任务从接口文档里抽出来，订阅过滤内的自动带pwd。文档 /docs 路由增加basic验证防止被盗用接口
+2. 定时任务 /tasks路由返回信息的lastrun和nextrun显示优化，从UTC时间改成北京时间
+3. 尝试支持cat源的本地代理功能，增加`getProxyUrl` 函数,T4增加 `ENV` 对象
+4. 去除 `adapt` 属性 改为 `do` 属性
+
+### 20250812
+
+更新至V1.2.9
+
+已知bug: cat源动态修改代码后如果没重启后端服务，修改的内容不生效(通过打日志看出来的，原因是esm模块缓存)  
+因此代码里通过`?v=文件hash值` 绕过esm缓存机制，不确定会不会造成内存占用问题。  
+定时任务脚本也存在类似问题，但是没做绕过，必须重启服务。
+
+```javascript
+const scriptUrl = `${pathToFileURL(filePath).href}?v=${fileHash}`;
+```
+
+1. py和猫源支持头信息处放ext扩展参数
+2. cat猫源支持T4模式(需要设置中心enable_cat设置为2)
+3. cat t4源支持使用 `req` `jsoup` 等对象，由于drpyS导入在前，理论上drpyS里所有globalThis暴露的变量都可以用
+
+### 20250810
+
+更新至V1.2.8
+
+1. 引入 `cron` 依赖，支持定时执行执行 `scripts/cron` 下的脚本
+2. 优化未含sub订阅码时自定义源排序不生效的问题
+3. 完善两套实用定时任务 `可转债打新提醒` `国内每日新闻`，可根据配置开启消息通知
+
+### 20250808
+
+更新至V1.2.7
+
+catvod源支持，更新部分源
+
+1. 把月亮影视的底裤扒了，它的源配置为我所用 `采集2025静态.json`
+   ，原链接为[moontv](https://github.com/LunaTechLab/MoonTV/blob/main/config.json)
+2. spider/catvod目录新增原生js支持
+3. 增加 & 修复源
+
+### 20250805
+
+更新至V1.2.6
+
+由于上个版本实验性启用drpy2源t4风格接口，用户反馈极差，Bug难以修复，此版本弃用上版的drpy2解析逻辑
+
+1. 移除原drpy2解析逻辑，预留解析libs，待后面实现
+2. 优化代码风格，全局导入问题
+3. 增加源
+
+### 20250804
+
+更新至V1.2.5
+
+1. 修复 `央视大全.ds`
+2. 新增 `爱看机器人`、`凤凰FM`、`天空影视` 等源
+3. dr2接口模式增加 T4风格 by `涵晓`,实验性特性，存在同步接口性能问题，按需开启(设置中心把允许dr2值设置为2)
+4. package.json 新增显式依赖项
+
+### 20250801
+
+更新至V1.2.4
+
+1. 提供drpy-core轻量版，体积不到700kb
+2. 删除多余的drpy2相关文件
+
+### 20250729
+
+更新至V1.2.3
+
+1. drpy2接口增加 `buildQueryString` `TextEncoder` `TextDecoder` `WXXH` `WebAssembly`
+2. drpy2 依赖库打包成一个 `drpy-core.js`
+
+具体打包过程参考：[drpy2打包项目](https://github.com/hjdhnx/drpy-webpack)
+
+### 20250728
+
+更新至V1.2.2
+
+1. 文件头增加 lang 属性，方便区分加密情况下这个源是哪张类型，`ds` `dr2` `hipy`
+2. 修复日志输出到文件在轮转时乱创文件夹问题
+3. drpyS 增加 `buildQueryString` 函数
+4. 增加drpy2的api，相关文件路径在 `public/drpy2`
+
 ### 20250727
 
 更新至V1.2.1

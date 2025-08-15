@@ -1,39 +1,40 @@
 # drpyS(drpy-node)
 
 nodejs作为服务端的drpy实现。全面升级异步写法  
-~~积极开发中，每日一更~~，当前进度 `55%`  
-找工作中，随缘更新
+~~积极开发中，每日一更~~，当前进度 `73%`  
+~~找工作中，随缘更新~~  
+上班当牛马，下班要带娃，阶段性佛系趁娃睡觉熬夜更新
 
+* [接口文档](docs/apidoc.md) | [接口列表如定时任务](docs/apiList.md) | [小猫影视-待对接T4](https://github.com/waifu-project/movie/pull/135)
 * [本地配置接口-动态本地](/config?pwd=$pwd)
 * [本地配置接口-动态外网/局域网](/config/1?pwd=$pwd)
 * [其他配置接口-订阅过滤](/docs/sub.md)
+* [猫源调试教程](/docs/catDebug.md)
 * [代码加解密工具](/admin/encoder)
 * [V我50支付凭证生成器](/authcoder?len=10&number=1)
 * [接口压测教程](/docs/httpTest.md)
 * [央视点播解析工具](/proxy/央视大全[官]/index.html)
 * [cookie管理插件](/apps/cookie-butler/index.html)
+* [cron表达式插件](/apps/cron-generator/index.html)
 * [本站防止爬虫协议](/robots.txt)
 * [本项目主页-免翻](https://git-proxy.playdreamer.cn/hjdhnx/drpy-node)
 * [DS源适配猫影视](https://github.com/hjdhnx/CatPawOpen/tree/ds-cat)
+* [drpy2打包项目](https://github.com/hjdhnx/drpy-webpack)
 * [在线猫ds源主页](/cat/index.html)
 
 ## 更新记录
 
-### 20250727
+### 20250814
 
-更新至V1.2.1
+更新至V1.2.11
 
-全新版本，大堆特性，性能优化，稳定性增强。
+### 20250813
 
-### 20250726
+更新至V1.2.10
 
-更新至V1.2.0
+### 20250812
 
-1. 支持挂载py源
-
-### 20250310
-
-更新至V1.1.23
+更新至V1.2.9
 
 [点此查看完整更新记录](docs/updateRecord.md)
 
@@ -67,6 +68,7 @@ todo:
 * [puppeteer使用教程](docs/pupInstall.md)
 * [drpyS源属性说明](docs/ruleAttr.md)
 * [drpy2写源简述](docs/ruleDesc.md)
+* [关姐算法搭建说明](docs/suanfa.md)
 
 ## 问题说明
 
