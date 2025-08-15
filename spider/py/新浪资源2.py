@@ -1,10 +1,7 @@
 # coding=utf-8
 # !/usr/bin/python
-# 小司机出品 https://a1.zinjljz.cc/
-import sys
+# 小司机出品 
 import requests
-sys.path.append('..')
-from base.spider import Spider
 import base64
 from urllib.parse import unquote
 from lxml import etree
@@ -12,9 +9,15 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
+import re,sys,json
+sys.path.append('..')
+try:
+    # from base.spider import Spider as BaseSpider
+    from base.spider import BaseSpider
+except ImportError:
+    from t4.base.spider import BaseSpider
 
-
-class Spider(Spider):  # 元类 默认的元类 type
+class Spider(BaseSpider):  # 元类 默认的元类 type
     def getName(self):
         return "站点集合"
 
