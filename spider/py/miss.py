@@ -1,10 +1,18 @@
-# -*- coding: utf-8 -*-
+"""
+@header({
+  searchable: 1,
+  filterable: 1,
+  quickSearch: 1,
+  title: '天空影视',
+  lang: 'hipy'
+})
+"""
 
-import re
-import socket
-import sys
-from urllib.parse import urlparse
-from pyquery import PyQuery as pq
+from Crypto.PublicKey import RSA
+from Crypto.Util.Padding import pad
+from Crypto.Cipher import AES, PKCS1_v1_5
+import sys,time,json,base64,urllib3,hashlib
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 sys.path.append('..')
 try:
     # from base.spider import Spider as BaseSpider
@@ -12,224 +20,216 @@ try:
 except ImportError:
     from t4.base.spider import BaseSpider
 
-
 class Spider(BaseSpider):
+    host, android_id, init_sign_salt, app_cert_sha1, private_key, token, timeout, headers = ('','','','','','','',
+    {
+        'User-Agent': "okhttp-okgo/jeasonlzy",
+        'Connection': "Keep-Alive",
+        'Accept-Encoding': "gzip",
+        'Accept-Language': "zh-CN,zh;q=0.8",
+        'sign': "",
+        'devicename': "Xiaomi 15",
+        'deviceos': "15",
+        'bundleid': "",
+        'versionname': "2.1.0",
+        'versioncode': "2001000",
+        'vendor': "Xiaomi",
+        'chid': "26002",
+        'subchid': "26002",
+        'os': "1",
+        'screenpx': "2670*1200",
+        'nettype': "wifi",
+        'audit': "1",
+        'force': "1"
+    })
 
-    def init(self, extend=""):
-        pass
-
-    def getName(self):
-        pass
-
-    def isVideoFormat(self, url):
-        pass
-
-    def manualVideoCheck(self):
-        pass
-
-    def destroy(self):
-        pass
-
-    host = 'https://missav.mrst.one'
-    # host = 'https://missav.ai'
-
-    headers = {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        'cache-control': 'no-cache',
-        'dnt': '1',
-        'pragma': 'no-cache',
-        'priority': 'u=0, i',
-        'referer': f'{host}',
-        'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="130", "Google Chrome";v="130"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"',
-        'sec-fetch-dest': 'document',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-site': 'same-origin',
-        'sec-fetch-user': '?1',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-    }
-
-    Config = {
-        "class": [
-            {
-                "type_name": "最近更新",
-                "type_id": "new"
-            },
-            {
-                "type_name": "新作上市",
-                "type_id": "release"
-            },
-            {
-                "type_name": "无码流出",
-                "type_id": "uncensored-leak"
-            },
-            {
-                "type_name": "中文字幕",
-                "type_id": "chinese-subtitle"
-            },
-            {
-                "type_name": "女优",
-                "type_id": "actresses"
-            },
-            {
-                "type_name": "类型",
-                "type_id": "genres"
-            },
-            {
-                "type_name": "发行商",
-                "type_id": "makers"
-            }
-        ],
-    }
-
-    fts = [
-        {
-            'key': 'filters',
-            'name': '类型',
-            'value': [
-                {'n': '单人作品', 'v': 'individual'},
-                {'n': '多人作品', 'v': 'multiple'},
-                {'n': '中文字幕', 'v': 'chinese-subtitle'}
-            ]
-        },
-        {
-            'key': 'sort',
-            'name': '排序',
-            'value': [
-                {'n': '发行日期', 'v': 'released_at'},
-                {'n': '最近更新', 'v': 'published_at'},
-                {'n': '收藏数', 'v': 'saved'},
-                {'n': '今日浏览数', 'v': 'today_views'},
-                {'n': '本周浏览数', 'v': 'weekly_views'},
-                {'n': '本月浏览数', 'v': 'monthly_views'},
-                {'n': '总浏览数', 'v': 'views'}
-            ]
-        }
-    ]
+    def init(self, extend=''):
+        try:
+            config = json.loads(extend)
+        except (json.JSONDecodeError, TypeError):
+            config = {}
+        self.timeout = config.get('timeout', 15)
+        self.host = config.get('host', 'http://api-live.vfilm.life')
+        self.android_id = config.get('android_id', '6617a62678360a86')
+        self.init_sign_salt = config.get('init_sign_salt', 'lsdfnrtpmslscndy')
+        self.app_cert_sha1 = config.get('app_cert_sha1', '70:27:C9:DC:98:96:75:CD:35:DB:0C:CE:AC:CA:84:0A:B7:1E:B5:7F')
+        self.private_key = config.get('private_key', 'MIICWwIBAAKBgQDYJzTUOgYdR/eIhsjpNMYWQGYl3pBycwKDoL6KThpPwrZQ9+xv\nLSaPj92HQknVaWR/RD6tHVRysChoeqAFyyQUe4UXAYnJDNlurpELb5HUIBFgmO97\niIOJCK6zbmnHT6WOHYaODTqrmX6NBgLjoFiDYBPYxG1T/K1uZ47xQDHFQQIDAQAB\nAoGAEpT8Q6phUC8ZppD/wJya0tribSr++/fLJYmyF62zMVwp1DgcCUq2X+0cPD6E\nnmYbD53MTZGR6vId5y1ziEv4Y+nu5EUyDk1xeGIxojpLhxuRoCbBt+LMJ1YUxv6p\n6F4SNwQ10U78m829Ud50mJBvkt2Vg8607SUrWheydvWHyAECQQDvayhgX5XEFaha\nUtPp5pPIkKBqHnLGm4et8be/jIIFhY9CIJbKLsqc0OFwNvz46GtRQwrtHP7LxTEF\nYT0C6CahAkEA5x+OqN/iykZIHc6Z2qZfAiLjPnQJu9DTXC/kt3TlsCc3XPNkXlAu\nq786LluH6dzQfDbLpmODtzNWavfgCtE6oQJAdTsJKDdlg//+0UthTFSE5F48zfle\nxfT9+KQ1Duvj9oQxY3XFn/ZNa3+0A1hJgi977Oxg+z2JXYmOuU2lrDi0QQJAMWwA\nF4B4gIRy21zYbXbyDgTjzvEFO9I1wBrFr60hiH96STgKmFhRAozLpioQcCO1uToG\nZjgVbFFgA1Op5uZCwQJAL1ziHIphaoCpHnnESidt3Nlrzqj/5uEpdHu7ZvPuZYya\nU8e1AhjeP+zKvfJUiXwDGuDZLx5Xe0BK8Bu72sdKcQ==')
+        self.headers['bundleid'] = config.get('bundleid', 'com.ytwl.fhtq')
+        self.token = config.get('token', '')
+        imsi_id = config.get('imsi_id', '1')
+        self.headers['sign'] = self.sign_encrypt(f'jing##&&&wei##&&&fuwu##{imsi_id}&&&idian##&&&she##{self.android_id}&&&mdian##{self.android_id}&&&olian##&&&an##{self.android_id}')
 
     def homeContent(self, filter):
-        html = self.getpq(self.fetch(f"{self.host}/cn",headers=self.headers))
-        result = {}
-        filters = {}
-        classes=[]
-        for i in list(html('.mt-4.space-y-4').items())[:2]:
-            for j in i('ul li').items():
-                classes.append({
-                    'type_name': j.text(),
-                    'type_id': j('a').attr('href').split('/')[-1]
+        if not self.host: return None
+        timestamp = self.timestamp()
+        payload = {
+            'applock': "0",
+            'ncode': self.init_sign(timestamp),
+            'force': "1",
+            'retime': timestamp
+        }
+        response = self.post(f'{self.host}/news/tv/columns', data=payload, headers=self.headers, timeout=self.timeout, verify=False).json()
+        classes = []
+        for i in response['data']['list']:
+            if i['is_show_recommend'] == 1:
+                home_class_id = i.get('column_id')
+                continue
+            classes.append({'type_id': i['column_id'], 'type_name': i['name']})
+        timestamp = self.timestamp()
+        payload = {
+            'column_id': home_class_id or '164',
+            'ncode': self.init_sign(timestamp),
+            'page': "1",
+            'retime': timestamp
+        }
+        response = self.post(f'{self.host}/news/tv/sectionsPageByColumn', data=payload, headers=self.headers, timeout=self.timeout, verify=False).json()
+        section_list = response['data']['section_list']
+        videos = []
+        for i in section_list:
+            for j in i.get('tv_list', []):
+                videos.append({
+                    'vod_id': j.get('news_id'),
+                    'vod_name': j.get('title', j.get('sub_title')),
+                    'vod_pic': j.get('ver_pic')
                 })
-        result['class'] = classes
-        result['filters'] = filters
-        result['list'] = self.getlist(html('.grid-cols-2.md\\:grid-cols-3 .thumbnail.group'))
-        return result
-
-    def homeVideoContent(self):
-        pass
+        return {'class': classes, 'list': videos}
 
     def categoryContent(self, tid, pg, filter, extend):
-        params={
-            'page':'' if pg=='1' else pg
+        timestamp = self.timestamp()
+        payload = {
+            'column_id': tid,
+            'ncode': self.init_sign(timestamp),
+            'page': pg,
+            'retime': timestamp
         }
-        params.update(extend)
-        params={k: v for k, v in params.items() if v != ""}
-        data=self.getpq(self.fetch(f"{self.host}/cn/{tid}",headers=self.headers,params=params))
-        result = {}
-        result['list'] = self.getlist(data('.grid-cols-2.md\\:grid-cols-3 .thumbnail.group'))
-        result['page'] = pg
-        result['pagecount'] = 9999
-        result['limit'] = 90
-        result['total'] = 999999
-        return result
+        response = self.post(f'{self.host}/news/tv/tvListByColumn', data=payload, headers=self.headers, timeout=self.timeout, verify=False).json()
+        videos = []
+        for i in response['data']['list']:
+            up_count = i.get('up_count', '')
+            if up_count:
+                up_count = f'{up_count}集'
+            videos.append({
+                'vod_id': i.get('news_id'),
+                'vod_name': i.get('title'),
+                'vod_pic': i.get('ver_pic'),
+                'vod_remarks': up_count,
+                'vod_area': i.get('area'),
+                'vod_class': i.get('cat'),
+                'vod_score': i.get('score'),
+                'vod_year': i.get('pubdate')
+            })
+        return {'list': videos, 'page': pg}
+
+    def searchContent(self, key, quick, pg='1'):
+        timestamp = self.timestamp()
+        payload = {
+            'ncode': self.init_sign(timestamp),
+            'signKey': self.signKey(timestamp),
+            'page': pg,
+            'is_check': "0",
+            'keyword': key,
+            'retime': timestamp
+        }
+        response = self.post(f'{self.host}/search/wordinfo', data=payload, headers=self.headers, timeout=self.timeout, verify=False).json()
+        videos = []
+        for i in response['data']['search_list']:
+            for j in i.get('list',[]):
+                vod_remarks = j.get('up_count')
+                if vod_remarks:
+                    vod_remarks = f'{vod_remarks}集'
+                else:
+                    vod_remarks = j.get('news_type_name')
+                videos.append({
+                    'vod_id': j.get('news_id'),
+                    'vod_name': j.get('origin_title',j.get('title')),
+                    'vod_pic': j.get('ver_pic'),
+                    'vod_content': j.get('desc'),
+                    'vod_remarks': vod_remarks,
+                    'vod_area': j.get('area'),
+                })
+        return {'list': videos, 'page': pg}
 
     def detailContent(self, ids):
-        v=self.getpq(self.fetch(ids[0],headers=self.headers))
-        sctx=v('body script').text()
-        js_pattern = r"eval\(function\(p,a,c,k,e,d\).*?return p\}(.*?)\)\)"
-        js_match = re.search(js_pattern, sctx).group(0)
-        urls=self.execute_js(js_match)
-        c=v('.space-y-2 .text-secondary')
-        vod = {
-            'type_name': c.eq(-3)('a').text(),
-            'vod_year': c.eq(0)('span').text(),
-            'vod_remarks': c.eq(1)('span').text(),
-            'vod_actor': c.eq(3)('a').text(),
-            'vod_director': c.eq(-2)('a').text(),
-            'vod_content': v('.text-secondary.break-all').text(),
-            'vod_play_from': 'MissAV',
-            'vod_play_url': urls if urls else f"嗅探${ids[0]}",
+        timestamp = self.timestamp()
+        payload = {
+            'ncode': self.init_sign(timestamp),
+            'signKey': self.signKey(timestamp),
+            'news_id': ids[0],
+            'retime': timestamp
         }
-        return {'list': [vod]}
-
-    def searchContent(self, key, quick, pg="1"):
-        data=self.getpq(self.fetch(f"{self.host}/cn/search/{key}",headers=self.headers,params={'page':pg}))
-        return {'list': self.getlist(data('.grid-cols-2.md\\:grid-cols-3 .thumbnail.group')),'page':pg}
-
-    def playerContent(self, flag, id, vipFlags):
-        p=0 if '嗅' in flag else 1
-        return {'parse': p, 'url': id, 'header': self.headers}
-
-    def localProxy(self, param):
-        pass
-
-    def getpq(self, response):
-        response=response.text
-        try:
-            return pq(response)
-        except Exception as e:
-            print(f"{str(e)}")
-            return pq(response.encode('utf-8'))
-
-    def getlist(self,data):
+        response = self.post(f'{self.host}/news/tv/detail', data=payload, headers=self.headers, timeout=self.timeout, verify=False).json()
+        data = response['data']
+        timestamp2 = self.timestamp()
+        payload = {
+            'next': "0",
+            'pl_id': "",
+            'playlink_num': "1",
+            'ncode': self.init_sign(timestamp2),
+            'format': "high",
+            'mobile': "",
+            'check': "0",
+            'mpl_id': "",
+            'news_id': ids[0],
+            'retime': timestamp2,
+            'resite': "",
+            'signKey': self.signKey(timestamp2),
+            'bid': "300",
+            'retry': "0"
+        }
+        response = self.post(f'{self.host}/news/tv/multiDetail', data=payload, headers=self.headers, timeout=self.timeout, verify=False).json()
+        data_ = response['data']['data']
+        data2_ = self.decrypt(data_)
+        data2 = json.loads(data2_)
+        max_up_count = data2.get('max_up_count',data2.get('up_count'))
+        news_id = data2['news_id']
+        site_list_test = data2.get('test')
+        if site_list_test:
+            site_list = site_list_test.get('site_list',[])
+        vod_play_froms = []
+        vod_play_froms.extend(site_list)
+        vod_play_froms = [str(item) for item in vod_play_froms]
+        vod_play_urls = []
+        for i in vod_play_froms:
+            urls = []
+            for j in range(1,int(max_up_count) + 1):
+                urls.append(f"第{j}集${j}@{news_id}@{i}")
+            vod_play_urls.append('#'.join(urls))
         videos = []
-        for i in data.items():
-            k = i('.overflow-hidden.shadow-lg a')
-            id=k.eq(0).attr('href')
-            if id:
-                videos.append({
-                    'vod_id': id,
-                    'vod_name': i('.text-secondary').text(),
-                    'vod_pic': k.eq(0)('img').attr('data-src'),
-                    'vod_year': '' if len(list(k.items())) < 3 else k.eq(1).text(),
-                    'vod_remarks': k.eq(-1).text(),
-                    'style': {"type": "rect", "ratio": 1.33}
-                })
-        return videos
+        up_count = data.get('up_count',data.get('max_up_count'))
+        if up_count:
+            up_count = f'{up_count}集'
+        videos.append({
+            'vod_id': data.get('news_id'),
+            'vod_name': data.get('title'),
+            'vod_content': data.get('desc'),
+            'vod_director': data.get('dir'),
+            'vod_actor': data.get('act'),
+            'vod_class': data.get('cat'),
+            'vod_remarks': up_count,
+            'vod_area': data.get('area'),
+            'vod_play_from': '$$$'.join(vod_play_froms),
+            'vod_play_url': '$$$'.join(vod_play_urls)
+        })
+        return {'list': videos}
 
-    def execute_js(self, js_code):
-        """
-        使用项目中的QuickJS执行JavaScript代码
-        """
-        try:
-            # 导入Java类
-            from com.whl.quickjs.wrapper import QuickJSContext
-            self.log("成功导入QuickJSContext类")
-            ctx = QuickJSContext.create()
-            ctx.evaluate(js_code)
-            result = []
-            common_vars = ["source", "source842", "source1280"]
-
-            for var_name in common_vars:
-                try:
-                    value = ctx.getGlobalObject().getProperty(var_name)
-                    if value is not None:
-                        if isinstance(value, str):
-                            value_str = value
-                        else:
-                            value_str = value.toString()
-                        if "http" in value_str:
-                            result.append(f"{var_name}${value_str}")
-                            self.log(f"找到变量 {var_name} = {value_str[:50]}...")
-                except Exception as var_err:
-                    self.log(f"获取变量 {var_name} 失败: {var_err}")
-                    # 释放资源
-            self.log("释放QuickJS资源...")
-            ctx.destroy()
-            return '#'.join(result)
-
-        except Exception as e:
-            self.log(f"执行JavaScript代码失败: {e}")
-
-            return None
+    def playerContent(self, flag, id, vipflags):
+        jx, url, play_header = 0, '', {'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 15; 24129PN74C Build/AP3A.240617.008)'}
+        episodes, news_id, resite = id.split('@', 2)
+        timestamp = self.timestamp()
+        payload = {
+            'next': "0",
+            'pl_id': "",
+            'playlink_num': episodes,
+            'ncode': self.init_sign(timestamp),
+            'format': 'high',
+            'mobile': "",
+            'check': "0",
+            'mpl_id': "",
+            'news_id': news_id,
+            'retime': timestamp,
+            'resite': resite,
+            'signKey': self.signKey(timestamp),
+            'bid': '300',
+            'retry': "0"
+        }
+        response = self.post(f'{self.host}/news/tv/multiDetail', data=payload, headers=self.headers,timeout=self.timeout, verify=False).json()
