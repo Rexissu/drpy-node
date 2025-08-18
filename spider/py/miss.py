@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
-# by @嗷呜
+
 import re
 import socket
 import sys
 from urllib.parse import urlparse
 from pyquery import PyQuery as pq
 sys.path.append('..')
-from base.spider import Spider
+try:
+    # from base.spider import Spider as BaseSpider
+    from base.spider import BaseSpider
+except ImportError:
+    from t4.base.spider import BaseSpider
 
 
-class Spider(Spider):
+class Spider(BaseSpider):
 
     def init(self, extend=""):
         pass
@@ -227,4 +231,5 @@ class Spider(Spider):
 
         except Exception as e:
             self.log(f"执行JavaScript代码失败: {e}")
+
             return None
