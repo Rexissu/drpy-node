@@ -4,6 +4,7 @@
   filterable: 1,
   quickSearch: 1,
   title: '七猫小说',
+  logo: 'https://cdn-front.qimao.com/global/static/images/favicon2022.ico',
   lang: 'hipy'
 })
 """
@@ -27,6 +28,8 @@ import re
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 import hashlib
+
+TIMEOUT = 10
 
 
 class Spider(BaseSpider):
@@ -98,8 +101,11 @@ class Spider(BaseSpider):
         api_url = f'{self.host}/shuku/fyclass-fyfilter-fypage/'
         url = api_url.replace('fyclass', str(tid)).replace('fyfilter', filter_url).replace('fypage', str(pg))
         url = self.jinja_render(url, fl=extend)
+        url1 = "{{host}}/qimaoapi/api/classify/book-list?channel={{tid}}&category1={{fl.作品分类 or 'a'}}&category2=a&words={{fl.作品字数 or 'a'}}&update_time={{fl.更新时间 or 'a'}}&is_vip=a&is_over={{fl.是否完结 or 'a'}}&order={{fl.排序 or 'click'}}&page={{page}}"
+        url1 = self.jinja_render(url1, fl=extend, host=self.host, tid=tid, page=pg)
         print('url:', url)
-        r = requests.get(url, headers=self.headers)
+        print('url1:', url1)
+        r = requests.get(url, headers=self.headers, timeout=TIMEOUT)
         html = r.text
         d = []
         jsp = jsoup(url)
@@ -119,11 +125,21 @@ class Spider(BaseSpider):
                 "vod_pic": pd(it, 'img&&src'),
                 "vod_content": pdfh(it, '.s-desc&&Text'),
             })
+        try:
+            r = requests.get(url1, headers=self.headers, timeout=TIMEOUT)
+            json = r.json()
+            book_list = json['data']['book_list']
+            for book in d:
+                book_extra = [x for x in book_list if x.get('read_url') == book['vod_id']]
+                if len(book_extra) == 1:
+                    book['vod_pic'] = book_extra[0].get('image_link') or book['vod_pic']
+        except Exception:
+            pass
+
         result = {}
-        pagecount = 1
-        limit = 20
-        total = 9999
-        videos = []
+        pagecount = 999  # 设置为1就只能1页不能翻页
+        limit = 15  # 一页多少
+        total = 999999
         result['list'] = d
         result['page'] = pg
         result['pagecount'] = pagecount
@@ -133,7 +149,7 @@ class Spider(BaseSpider):
 
     def detailContent(self, ids):
         url = ids[0]
-        r = requests.get(url, headers=self.headers)
+        r = requests.get(url, headers=self.headers, timeout=TIMEOUT)
         html = r.text
         jsp = jsoup(url)
         pdfh = jsp.pdfh
@@ -156,7 +172,7 @@ class Spider(BaseSpider):
         chapter_url = self.buildUrl(chapter_url, {
             'book_id': book_id
         })
-        r = requests.get(chapter_url, headers=self.headers)
+        r = requests.get(chapter_url, headers=self.headers, timeout=TIMEOUT)
         json = r.json()
         chapters = jsp.pjfa(json, 'data.chapters')
         # print('chapters:', chapters)
@@ -182,7 +198,7 @@ class Spider(BaseSpider):
         }
         params['sign'] = self.get_sign_str(params)
         url = self.buildUrl(url, params)
-        r = requests.get(url, headers=self.sign_headers)
+        r = requests.get(url, headers=self.sign_headers, timeout=TIMEOUT)
         json = r.json()
         # print('json:', json)
         books = json['data']['books']
@@ -206,7 +222,7 @@ class Spider(BaseSpider):
         url = 'https://api-ks.wtzw.com/api/v1/chapter/content'
         url = self.buildUrl(url, params)
         title = id.split('@@')[2]
-        r = requests.get(url, headers=self.sign_headers)
+        r = requests.get(url, headers=self.sign_headers, timeout=TIMEOUT)
         json_str = r.json()
         result = json_str['data']['content']
         content = self.decode_content(result)
