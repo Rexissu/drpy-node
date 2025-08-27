@@ -20,6 +20,7 @@ nodejs作为服务端的drpy实现。全面升级异步写法
 * [本站防止爬虫协议](/robots.txt)
 * [本项目主页-免翻](https://git-proxy.playdreamer.cn/hjdhnx/drpy-node)
 * [DS源适配猫影视](https://github.com/hjdhnx/CatPawOpen/tree/ds-cat)
+* [DS插件项目-golang](https://github.com/hjdhnx/drpy-plugin)
 * [drpy2打包项目](https://github.com/hjdhnx/drpy-webpack)
 * [在线猫ds源主页](/cat/index.html)
 
@@ -89,11 +90,11 @@ todo:
 
 * 终端执行
 
-`bash -c "$(curl -fsSLk https://git-proxy.playdreamer.cn/hjdhnx/drpy-node/raw/refs/heads/main/autorun.sh)"`
+`bash -c "$(curl -fsSLk https://git-proxy.playdreamer.cn/hjdhnx/drpy-node/raw/refs/heads/main/install/autorun.sh)"`
 
 * 添加定时方案
 
-`echo "30 7 * * * cd /patch && bash -c \"\$(curl -fsSLk https://git-proxy.playdreamer.cn/hjdhnx/drpy-node/raw/refs/heads/main/autorun.sh)\" >> /patch/drpyslog.log 2>&1" | crontab -`
+`echo "30 7 * * * cd /patch && bash -c \"\$(curl -fsSLk https://git-proxy.playdreamer.cn/hjdhnx/drpy-node/raw/refs/heads/main/install/autorun.sh)\" >> /patch/drpyslog.log 2>&1" | crontab -`
 
 或者下载脚本到本地后
 
