@@ -148,7 +148,7 @@ class Jsoup {
         return res;
     }
 
-    pdfl(html, parse, list_text, list_url, url_key) {
+    pdfl(html, parse, list_text, list_url, MY_URL) {
         if (!html || !parse) return [];
         parse = this.parseHikerToJq(parse, false);
         const new_vod_list = [];
@@ -162,11 +162,16 @@ class Jsoup {
         }
 
         ret.each((_, element) => {
-            new_vod_list.push(`${doc(element)}`);
+            const _html = `${doc(element)}`;
+            // new_vod_list.push(`${doc(element)}`);
+            let _title = this.pdfh(_html, list_text);
+            let _url = this.pd(_html, list_url, MY_URL);
+            new_vod_list.push(`${_title}$${_url}`);
         });
 
         return new_vod_list;
     }
+
 
     pdfh(html, parse, baseUrl = '') {
         if (!html || !parse) return '';
@@ -230,8 +235,7 @@ class Jsoup {
                         if (ret) break;
                     }
             }
-        }
-        else { // 增加返回字符串，禁止直接返回pq对象
+        } else { // 增加返回字符串，禁止直接返回pq对象
             ret = `${ret}`;
         }
 

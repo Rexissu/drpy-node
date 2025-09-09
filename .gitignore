@@ -150,4 +150,8 @@ dist
 /scripts/python/appMap.txt
 /binary/
 /plugins/
-/plugin.js
+/.claude
+/.plugins.js
+/clipboard.txt
+/clipboard.txt.bak
+/apps/cat/

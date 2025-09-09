@@ -7,9 +7,9 @@ import {fileURLToPath, pathToFileURL} from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// plugin.js 和 plugin.example.js 在上级目录
-const userConfigPath = path.join(__dirname, "../plugin.js");
-const exampleConfigPath = path.join(__dirname, "../plugin.example.js");
+// .plugins.js 和 .plugins.example.js 在上级目录
+const userConfigPath = path.join(__dirname, "../.plugins.js");
+const exampleConfigPath = path.join(__dirname, "../.plugins.example.js");
 
 // 尝试加载用户配置，如果没有就用 example
 let plugins = [];
@@ -17,10 +17,10 @@ try {
     console.log(`检查插件配置文件: ${userConfigPath} 是否存在`);
     if (fs.existsSync(userConfigPath)) {
         plugins = (await import(pathToFileURL(userConfigPath).href)).default;
-        console.log("[pluginManager] 使用用户 plugin.js 配置");
+        console.log("[pluginManager] 使用用户 .plugins.js 配置");
     } else if (fs.existsSync(exampleConfigPath)) {
         plugins = (await import(pathToFileURL(exampleConfigPath).href)).default;
-        console.log("[pluginManager] 使用默认 plugin.example.js 配置");
+        console.log("[pluginManager] 使用默认 .plugins.example.js 配置");
     }
 } catch (err) {
     console.error("[pluginManager] 加载插件配置失败:", err);
@@ -136,19 +136,53 @@ function startPlugin(plugin, rootDir) {
 }
 
 /**
+ * 生成插件唯一 key
+ * @param {Object} plugin 插件配置
+ * @param {number} index 插件在配置里的序号
+ */
+function getProcessKey(plugin, index) {
+    if (plugin.id) return plugin.id; // 用户自定义 id
+    return `${plugin.name}#${index + 1}`;
+}
+
+/**
  * 启动所有插件
  * @param {string} rootDir 项目根目录
  */
 export function startAllPlugins(rootDir = process.cwd()) {
     console.log("[pluginManager] 准备启动所有插件...");
     const processes = {};
-    for (const plugin of plugins) {
+    plugins.forEach((plugin, index) => {
         const proc = startPlugin(plugin, rootDir);
+        const key = getProcessKey(plugin, index);
+
         if (proc) {
-            processes[plugin.name] = proc;
+            processes[key] = proc;
+            console.log(`[pluginManager] 插件已启动并注册进程: ${key} (pid=${proc.pid})`);
         } else {
-            console.error(`[pluginManager] 插件 ${plugin.name} 启动失败，未加入到 processes`);
+            console.error(`[pluginManager] 插件 ${key} 启动失败，未加入到 processes`);
         }
-    }
+    });
     return processes;
+}
+
+/**
+ * 停止指定插件
+ * @param {Object} processes 插件进程字典
+ * @param {string} key 插件唯一 key
+ */
+export function stopPlugin(processes, key) {
+    const proc = processes[key];
+    if (!proc) {
+        console.warn(`[pluginManager] 未找到插件进程: ${key}`);
+        return;
+    }
+
+    console.log(`[pluginManager] 停止插件: ${key} (pid=${proc.pid})`);
+    try {
+        proc.kill("SIGTERM");
+        delete processes[key];
+    } catch (err) {
+        console.error(`[pluginManager] 停止插件 ${key} 失败:`, err);
+    }
 }

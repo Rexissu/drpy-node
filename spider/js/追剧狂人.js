@@ -2,7 +2,7 @@
 @header({
   searchable: 1,
   filterable: 1,
-  quickSearch: 1,
+  quickSearch: 0,
   title: '追剧狂人',
   logo: 'https://i-blog.csdnimg.cn/blog_migrate/2621e710a94ab40ba66645d47f296aaf.gif',
   lang: 'ds'
@@ -17,26 +17,27 @@ var rule = {
     host: "https://www.zjkrmv.vip",
     url: "/vodshow/fyfilter.html",
     searchUrl: "/vodsearch/**----------fypage---",
-    searchable: 1, quickSearch: 1, double: true, timeout: 10000, play_parse: true, filterable: 1, invalid: true,
+    searchable: 1, quickSearch: 1, double: false, timeout: 10000, play_parse: true, filterable: 1, invalid: true,
     class_name: "电影&连续剧&动漫&综艺&短剧",
     class_url: "1&2&4&3&23",
     filter_url: '{{fl.类型}}-{{fl.地区}}-{{fl.by}}-{{fl.剧情}}-----fypage---{{fl.年份}}.html',
     filter_def: {1: {类型: '1'}, 2: {类型: '2'}, 3: {类型: '3'}, 4: {类型: '4'}, 23: {类型: '23'}},
-    推荐: async function (tid, pg, filter, extend) {
-        const {input, pdfa, pdfh, pd} = this;
-        const html = await request(input);
-        const d = [];
-        const data = pdfa(html, ".myui-vodbox-content");
-        data.forEach((it) => {
-            d.push({
-                title: pdfh(it, ".title&&Text"),
-                pic_url: pd(it, "img&&src"),
-                desc: pdfh(it, ".tag&&Text"),
-                url: pd(it, "a&&href"),
-            });
-        });
-        return setResult(d);
-    },
+    推荐: '.myui-vodbox-content;.title&&Text;img&&src;.tag-box&&Text;a&&href',
+    // 推荐: async function (tid, pg, filter, extend) {
+    //   const { input, pdfa, pdfh, pd } = this;
+    //   const html = await request(input);
+    //   const d = [];
+    //   const data = pdfa(html, ".myui-vodbox-content");
+    //   data.forEach((it) => {
+    //     d.push({
+    //       title: pdfh(it, ".title&&Text"),
+    //       pic_url: pd(it, "img&&src"),
+    //       desc: pdfh(it, ".tag&&Text"),
+    //       url: pd(it, "a&&href"),
+    //     });
+    //   });
+    //   return setResult(d);
+    // },
     一级: async function (tid, pg, filter, extend) {
         const {input, pdfa, pdfh, pd} = this;
         const html = await request(input);
@@ -84,10 +85,12 @@ var rule = {
         };
         return VOD;
     },
-    搜索: async function (wd, quick, pg) {
-        const homeFn = rule.一级.bind(this);
-        return await homeFn();
-    },
+    // 搜索: async function (wd, quick, pg) {
+    //   const homeFn = rule.一级.bind(this);
+    //   return await homeFn();
+    // },
+    搜索: '*',
+    // 搜索:'.show-vod-list&&a;.title&&Text;img&&src;.tag&&Text;a&&href',
     lazy: async function (flag, id, flags) {
         let {input, pdfa, pdfh, pd} = this;
         let html = await request(input);
@@ -107,5 +110,5 @@ var rule = {
             return {parse: 1, url: input}
         }
     },
-    filter: "H4sIAAAAAAAAA+1aXW/TSBR951dUfu5D7X7CX1nxwK4qLdqFlRZ2JYSQgDRpk7JJWtFAaPqlbT4oDU2A7bYOSf5MZpz8CyZzJ547ae/ESBSBcJ96fMae4+vre8948vDalPpzXOfG1E8PQyyP/bb8QBx1gmaL7a470yZ599adZZr9+9bvfy3LSzp3h6NYsjZI1JxpwQyh6zyanhpRmVqvXQrSqyG7gNlCiaWrmF2UrDEdCJJq1po8kZTDL46Qpy85BqFnCqob7LyFZ7qOdPAnef64gFl3BstMV0fzjmjXppOvvez5aZtO16OEioAFzw2hLlbKyqtj9+FhpfzpcVDYMGir0sA/Yu0tm1JvXOnNEF647iinWKnBnvlUTl3OTsgpHILD6qCYChkFNT+oFPnZScgraAkCyzX4eYeMgKKpxOpk2XY7nE1B9ETeb2FeQc3315uYV9CWXC/KvHRMqlU0oXaw9xrPpiCKbed/zCuI76Zh3k1jglr2T4P5FTq2QBNq+UpOPF229lpPGB5BESx3g1w9SBd1EMMjNmWZfb7eFVejxYUjqHc1edprFXS0AEZ6Q84/9Fpt8g25lI3+hngz3jyqDwIY3Bzm5mwxEvwsXRmGJBEZwXl4Fs9U4GLONbkZzM3Y1YnSSKsTJKnOXUKzCGBwi5hbNLkFzC1MUDdvUzdvUYefkACRMkr2KDKjLmU/o+bKRq0zHSCqgrIz6yoI0FbFZMelqxjQdI8UpkKrATje7LUagOP9XJ8PcGJDp9UCTajt1yvs2ZEuTgCR2sxJ0Na8guOOAN/tENoqm/QIdFkDmqq59Uqvs68LLkCkJrU5KOqCrCA6f/dIhEOfD/CqMgH8jp4NIOITGf70leYBoti3cix5pmMP0KJ2sLPJX5ZJtYqm1BZW+2lfqwGIu+/b4Pl/rN1EDXh0BI3KHfb/RdkL0JYP2RTLvaPzAWgqe7t5kXE6ewHifCjxnQ2UDxIifqUbvClrHqDNkrY3glZpFAdCszHos/3pzw+oOsmzm8zPTaqTvNDonWUCvxve1v3b4nyUVok6r+gC9evt+/cMD9/un6yE7L1f/vhz2ajxN/X8jud8zaUb7tPC2fX8Ki777ix+tc5OhDM2aKuXEMZ0aDfTtN+iWyI/rg6NNZ5rIVpXvNqVSCopLoFyX8IobpuqLmrpQlUXoKmuqJYx5rIFBVEtHMyFQpSVDPVE1WKAqtxAU3WFXPeE75jw32znAJXL0ZHYgccO/MaP5sDJrm9aVNOSTnQy7MkpS4w3PB0lYxBVdyasDdjbU+bXNQ8wiv8lV+5g/8llu6Qptcocm2Y4ytrANFOmebL5GWUxKScDNKG2d36A3ZWC2N8meVF/61IQqd1KYTeuoN192Vq0or/495DvyZHNxo4sdmSxI4sd2SURjh1Z7MhiRzauOXZksSO7Skc291Ud2dxFR5ap8Y9vdH1aiuC61ClULSTrtDJ55oyzxm8AwJqNjXC/BXcmo6WzEWAUP0TFUt4q7XeA/uLvRuxUYqfyPTmVYRNa2TN6koCoFJP7pVRPStT7B4/pngQ0VcGytSCvf7+jIOLzu8Ex2tMDiNd41A4kobaf3+ln6d1bRVNq9w/YtvZKCiI1E/aieck39kMB2tSqDTdKLdCUWtJzKrUN8Wg/aLUATb783uAFtGXCYaf38RWdCUBTFTi7x9a2kXOTEHkt/x2r57XXAojydjvDi3o/VUGrT22y7guLT5X0D+2lPMvnrW/+PuS/jz4Bwn2c1vkqAAA="
+    filter: 'H4sIAAAAAAAAA+2Y227TQBCG73kK5Ote1GlpC6+CuABUCcRJ4iQhhASkSZsUkrSigZD0JJoDpaEJh9I6OHkZ7zp9CzaenZldoVoWIECQXvWbP+ud3fX8Y+1Dx3XOnX/oXJt/4Jxzwm5PbCw7E87NizfmTb5/8fq9+eiHN1VYZFrH6dYorMB1Hk3ocL4V+LUwt6iVGVbKNZFrsjJLSrjUlekMK3OsNFfEUY+Vs6TIJyX5uMyKO8kT5ZrW41zOTi69CrycIaXMxMMXxlQuzyXqi1YWKZ5LPt0LyyuGxHOF3q7w1wxJzXVhJMI2i1pHPPN4m4ljtpkz2mkeV7I6qgG140ZFHu5rTQONK3bkUR/HAVC+/YKo+lrTQMv8uMaaBtSGy13WNNC4l3VZ28NxAJTn5lsep4Hy7H9hTQPn0jFz6VjjnneE18BxADRuoah2Siy9xaHEtJL6ICy2w1wFF0PML8mWXB6oYTgFMf0icxD0yigDWMd+9Cno+caxIyc59tRk6gy9g+pfIz7N8WkzPsXxKTOe4njKjLscd834JMcnjbiqEowbBaNgjuNzZnyW47NmfIbjM2ac1+ua63V5vepfa4Oj6jc2GDlRXUUehacHYLsU1geA7Ub4YgHYjkgvTAS2v+EzAWwbw3EAto/hfAD0Frcb4tkuvsIANF9+P/RR02AbIOc5AtsBUQOgXNqNoL+FuQDQuOzqcQULTgON29hVmeM4gCT7CZaLGgBp6bx8+ho1AFp7rygyh7h2APKi9VX5qo5eBEDPLC8Ocx4+E4B96n344rPwu2RVyOy4O8M3dIoApBWyovgBNQA6xUFJnQGeIgDvak2ur9CuRkDawiB8hyvRQDvgr4S9mpWwFTLL6NIDLiFZWBVe8bsSkuVOcJgPvYF+1t2r6tc0V7otG/jWX7l6947xLvnD/QWt3Ll86/b8aOILE6dOqz8n9ZNfIkZDr/qB1+Rydtn/VEtUzc+Q2DJVkxr1IpbYdeRec9QWWZr5hQ09m1G/pyONIEmj/NFmH9eY4z8ETm6+sR8C5Y7qlWJ9m+oIedw4/4nGGWNzcc0KvFY8ORDpomW/OpSkMYv3B8JrowaQsOGd2JjjGl5cY46z9LgGFBxts6Vr4KaWkRWscQ0031qWm6gGw+55zzQkrbY/Zf9TY/sf2//Y/sf2P7b//9H+p3/S/rmEtf3nW/LrO3zluaC0zVuqcbcI/cFUp4wrP+gDlur+wlYQJY5HA5DEtiEt1ADG5vovmOuo5hc2DQNQQIUWc4GkinC4/Rg1AHpmoRWW8AJZA2mljXCPLlgA+EPl5AudYWl9WECj10DP3NoWVTRpDUmMWNY845IIgOaLuSKJazqio7bpE84HYGr1j4amgPZzpx98xcslDWz8m2KpSsYfAZm790G0S2juAPTMal5W8HJJA+9LVwxe0r5E8LcbeMr8gP/tSUQ5PPoGACVGrc8aAAA='
 }
