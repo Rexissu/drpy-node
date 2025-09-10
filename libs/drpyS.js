@@ -187,7 +187,7 @@ globalThis.database = database;
 
 
 export async function getSandbox(env = {}) {
-    const {getProxyUrl, hostUrl, fServer} = env;
+    const {getProxyUrl, requestHost, hostUrl, fServer} = env;
     // (可选) 加载所有 wasm 文件
     await CryptoJSW.loadAllWasm();
     const utilsSanbox = {
@@ -205,6 +205,7 @@ export async function getSandbox(env = {}) {
         $,
         pupWebview,
         getProxyUrl,
+        requestHost,
         hostUrl,
         fServer,
         getContentType,
@@ -575,6 +576,7 @@ export async function initJx(filePath, env, refresh) {
         }
         log(`Loading jx: ${filePath}, hash:${hashMd5}`);
         let t1 = utils.getNowTime();
+        console.log('env:', env);
         const {sandbox, context} = await getSandbox(env);
         // 执行文件内容，将其放入沙箱中
         const js_code = await getOriginalJs(fileContent);
