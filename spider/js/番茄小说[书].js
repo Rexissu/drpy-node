@@ -31,7 +31,7 @@ var rule = {
     homeUrl: 'https://fanqienovel.com/api/author/book/category_list/v0/',
     url: '/api/author/library/book_list/v0/?page_count=18&page_index=(fypage-1)&gender=1&category_id=fyclass&creation_status=-1&word_count=-1&book_type=-1&sort=0#fyfilter',
     // searchUrl: fqweb_host + '/search?query=**&page=fypage',
-    searchUrl: fqweb_host + '/api/search?key=**&tab_type=3&offset=0&page=fypage',
+    searchUrl: fqweb_host + '/api/search?key=**&tab_type=3&offset=((fypage-1)*10)',
     searchable: 2,
     quickSearch: 0,
     filterable: 1,
