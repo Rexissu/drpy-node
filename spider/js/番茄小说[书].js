@@ -22,6 +22,11 @@ const {requestHtml} = $.require('./_lib.request.js');
 // const fqweb_host = 'http://fqweb.jsj66.com';
 // const fqweb_host = 'http://fanqie.mduge.com';
 const fqweb_host = 'https://qkfqapi.vv9v.cn';
+// const fqweb_host = 'http://101.35.133.34:5000/docs'; //备选
+// const fqweb_host = 'http://103.236.91.147:9999/docs'; //备选
+// const fqweb_host = 'http://47.108.80.161:5005/docs'; //备选
+// const fqweb_host = 'http://140.143.165.56:9999/docs'; //备选
+// const fqweb_host = 'http://8.148.83.169:22222/docs'; //备选
 
 var rule = {
     类型: '小说',
