@@ -383876,6 +383876,7 @@ const objectToQueryString = (obj) => {
 */
 async function getOriginalJs(js_code) {
 	let current_match = /var rule|function|let |var |const|class Rule|async|this\./;
+	let current_match1 = /["{}&]/;
 	if (current_match.test(js_code)) return js_code;
 	log("[getOriginalJs] 密文源自动去除头信息...");
 	js_code = await FileHeaderManager.removeHeader(js_code, {
@@ -383931,7 +383932,7 @@ async function getOriginalJs(js_code) {
 		}
 	];
 	let func_index = 0;
-	while (!current_match.test(decode_content)) {
+	while (!current_match.test(decode_content) && !current_match1.test(decode_content)) {
 		decode_content = decode_funcs[func_index](js_code);
 		func_index++;
 		if (func_index >= decode_funcs.length) break;
@@ -393974,7 +393975,7 @@ async function getEngine(moduleName, query, inject_env) {
 	* @returns {Object} 环境对象，包含各种URL和配置
 	*/
 	function getEnv(moduleName) {
-		const { jsonUrl = "http://127.0.0.1:9978/json", publicUrl = "http://127.0.0.1:9978/public", requestHost = "http://127.0.0.1:9978", hostname = "127.0.0.1:9978", hostUrl = "127.0.0.1", proxyUrl = `http://127.0.0.1:9978/proxy?do=node&siteKey=${moduleName}`, proxyPath, httpUrl, imageApi, mediaProxyUrl, webdavProxyUrl, ftpProxyUrl, wsName, fServer } = inject_env;
+		const { jsonUrl = "http://127.0.0.1:9978/file/drpy-node/json/", publicUrl = "http://127.0.0.1:9978/file/drpy-node/public/", requestHost = "http://127.0.0.1:9978", hostname = "127.0.0.1:9978", hostUrl = "127.0.0.1", proxyUrl = `http://127.0.0.1:9978/proxy?do=node&siteKey=${moduleName}`, proxyPath, httpUrl, imageApi, mediaProxyUrl, webdavProxyUrl, ftpProxyUrl, wsName, fServer } = inject_env;
 		const getProxyUrl = function() {
 			return proxyUrl;
 		};
