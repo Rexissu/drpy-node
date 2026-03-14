@@ -14071,6 +14071,285 @@ global.NODERSA = import_node_rsa.default;
 global.atob = atob$3;
 global.btoa = btoa$3;
 //#endregion
+//#region ../libs_drpy/crypto-util.js
+/**
+* 加密解密工具库
+* 提供Base64、MD5、RC4等加密解密功能
+*/
+/**
+* 浏览器兼容的Base64编解码实现
+* @returns {Object} 包含atob和btoa方法的对象
+*/
+function window_b64() {
+	let b64map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	let base64DecodeChars = new Array(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1);
+	/**
+	* Base64编码
+	* @param {string} str 待编码字符串
+	* @returns {string} Base64编码结果
+	*/
+	function btoa(str) {
+		var out, i, len;
+		var c1, c2, c3;
+		len = str.length;
+		i = 0;
+		out = "";
+		while (i < len) {
+			c1 = str.charCodeAt(i++) & 255;
+			if (i == len) {
+				out += b64map.charAt(c1 >> 2);
+				out += b64map.charAt((c1 & 3) << 4);
+				out += "==";
+				break;
+			}
+			c2 = str.charCodeAt(i++);
+			if (i == len) {
+				out += b64map.charAt(c1 >> 2);
+				out += b64map.charAt((c1 & 3) << 4 | (c2 & 240) >> 4);
+				out += b64map.charAt((c2 & 15) << 2);
+				out += "=";
+				break;
+			}
+			c3 = str.charCodeAt(i++);
+			out += b64map.charAt(c1 >> 2);
+			out += b64map.charAt((c1 & 3) << 4 | (c2 & 240) >> 4);
+			out += b64map.charAt((c2 & 15) << 2 | (c3 & 192) >> 6);
+			out += b64map.charAt(c3 & 63);
+		}
+		return out;
+	}
+	/**
+	* Base64解码
+	* @param {string} str Base64编码字符串
+	* @returns {string} 解码结果
+	*/
+	function atob(str) {
+		var c1, c2, c3, c4;
+		var i, len = str.length, out;
+		i = 0;
+		out = "";
+		while (i < len) {
+			do
+				c1 = base64DecodeChars[str.charCodeAt(i++) & 255];
+			while (i < len && c1 == -1);
+			if (c1 == -1) break;
+			do
+				c2 = base64DecodeChars[str.charCodeAt(i++) & 255];
+			while (i < len && c2 == -1);
+			if (c2 == -1) break;
+			out += String.fromCharCode(c1 << 2 | (c2 & 48) >> 4);
+			do {
+				c3 = str.charCodeAt(i++) & 255;
+				if (c3 == 61) return out;
+				c3 = base64DecodeChars[c3];
+			} while (i < len && c3 == -1);
+			if (c3 == -1) break;
+			out += String.fromCharCode((c2 & 15) << 4 | (c3 & 60) >> 2);
+			do {
+				c4 = str.charCodeAt(i++) & 255;
+				if (c4 == 61) return out;
+				c4 = base64DecodeChars[c4];
+			} while (i < len && c4 == -1);
+			if (c4 == -1) break;
+			out += String.fromCharCode((c3 & 3) << 6 | c4);
+		}
+		return out;
+	}
+	return {
+		atob,
+		btoa
+	};
+}
+const { atob: atob$2, btoa: btoa$2 } = window_b64();
+/**
+* Base64编码（使用CryptoJS）
+* @param {string} text 待编码文本
+* @returns {string} Base64编码结果
+*/
+function base64Encode$1(text) {
+	return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text));
+}
+/**
+* Base64解码（使用CryptoJS）
+* @param {string} text Base64编码文本
+* @returns {string} 解码结果
+*/
+function base64Decode$2(text) {
+	return CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(text));
+}
+/**
+* MD5哈希
+* @param {string} text 待哈希文本
+* @returns {string} MD5哈希值
+*/
+function md5$1(text) {
+	return CryptoJS.MD5(text).toString();
+}
+/**
+* RC4加密
+* @param {string} word 待加密内容
+* @param {string} key 加密密钥
+* @returns {string} 加密结果
+*/
+function rc4Encrypt(word, key) {
+	return CryptoJS.RC4.encrypt(word, CryptoJS.enc.Utf8.parse(key)).toString();
+}
+/**
+* RC4解密
+* @param {string} word 待解密内容
+* @param {string} key 解密密钥
+* @returns {string} 解密结果
+*/
+function rc4Decrypt(word, key) {
+	const ciphertext = CryptoJS.enc.Hex.parse(word);
+	const key_data = CryptoJS.enc.Utf8.parse(key);
+	return CryptoJS.RC4.decrypt({ ciphertext }, key_data, {
+		mode: CryptoJS.mode.ECB,
+		padding: CryptoJS.pad.Pkcs7
+	}).toString(CryptoJS.enc.Utf8);
+}
+/**
+* RC4解码（自定义实现）
+* @param {string} data 待解码数据
+* @param {string} key 密钥
+* @param {number} t 类型标识
+* @returns {string} 解码结果
+*/
+function rc4_decode(data, key, t) {
+	let pwd = key || "ffsirllq";
+	let cipher = "";
+	key = [];
+	let box = [];
+	let pwd_length = pwd.length;
+	if (t === 1) data = atob$2(data);
+	else data = encodeURIComponent(data);
+	let data_length = data.length;
+	for (let i = 0; i < 256; i++) {
+		key[i] = pwd[i % pwd_length].charCodeAt();
+		box[i] = i;
+	}
+	for (let j = 0, i = 0; i < 256; i++) {
+		j = (j + box[i] + key[i]) % 256;
+		let tmp = box[i];
+		box[i] = box[j];
+		box[j] = tmp;
+	}
+	for (let a = 0, j = 0, i = 0; i < data_length; i++) {
+		a = (a + 1) % 256;
+		j = (j + box[a]) % 256;
+		let tmp = box[a];
+		box[a] = box[j];
+		box[j] = tmp;
+		let k = box[(box[a] + box[j]) % 256];
+		cipher += String.fromCharCode(data[i].charCodeAt() ^ k);
+	}
+	if (t === 1) return decodeURIComponent(cipher);
+	else return btoa$2(cipher);
+}
+/**
+* 十六进制编解码工具
+*/
+const hex = {
+	decode: function(val) {
+		return Buffer.from(val, "hex").toString("utf-8");
+	},
+	encode: function(val) {
+		return Buffer.from(val, "utf-8").toString("hex");
+	}
+};
+/**
+* 解析编码格式
+* @param {string} value 值
+* @param {string} encoding 编码格式
+* @returns {Object} CryptoJS编码对象
+*/
+const parseEncode = function(value, encoding) {
+	switch (encoding) {
+		case "base64": return CryptoJS.enc.Base64.parse(value);
+		case "hex": return CryptoJS.enc.Hex.parse(value);
+		case "latin1": return CryptoJS.enc.Latin1.parse(value);
+		case "utf8": return CryptoJS.enc.Utf8.parse(value);
+		default: return CryptoJS.enc.Utf8.parse(value);
+	}
+};
+/**
+* 格式化编码输出
+* @param {Object} value CryptoJS对象
+* @param {string} encoding 编码格式
+* @returns {string} 格式化结果
+*/
+const formatEncode = function(value, encoding) {
+	switch (encoding.toLowerCase()) {
+		case "base64": return value.toString();
+		case "hex": return value.ciphertext.toString();
+	}
+};
+/**
+* 格式化解码输出
+* @param {Object} value CryptoJS对象
+* @param {string} encoding 编码格式
+* @returns {string} 格式化结果
+*/
+const formatDecode = function(value, encoding) {
+	switch (encoding.toLowerCase()) {
+		case "utf8": return value.toString(CryptoJS.enc.Utf8);
+		case "base64": return value.toString(CryptoJS.enc.Base64);
+		case "hex": return value.toString(CryptoJS.enc.Hex);
+		default: return value.toString(CryptoJS.enc.Utf8);
+	}
+};
+/**
+* 获取加密模式
+* @param {string} mode 模式名称
+* @returns {Object} CryptoJS模式对象
+*/
+const getMode = function(mode) {
+	switch (mode.toLowerCase()) {
+		case "cbc": return CryptoJS.mode.CBC;
+		case "cfb": return CryptoJS.mode.CFB;
+		case "ofb": return CryptoJS.mode.OFB;
+		case "ctr": return CryptoJS.mode.CTR;
+		case "ecb": return CryptoJS.mode.ECB;
+		default: return CryptoJS.mode.CBC;
+	}
+};
+/**
+* 获取填充方式
+* @param {string} padding 填充方式名称
+* @returns {Object} CryptoJS填充对象
+*/
+const getPad = function(padding) {
+	switch (padding.toLowerCase()) {
+		case "zeropadding": return CryptoJS.pad.ZeroPadding;
+		case "pkcs5padding":
+		case "pkcs7padding": return CryptoJS.pad.Pkcs7;
+		case "ansix923": return CryptoJS.pad.AnsiX923;
+		case "iso10126": return CryptoJS.pad.Iso10126;
+		case "iso97971": return CryptoJS.pad.Iso97971;
+		case "nopadding": return CryptoJS.pad.NoPadding;
+		default: return CryptoJS.pad.ZeroPadding;
+	}
+};
+/**
+* RC4加密解密工具
+*/
+const rc4 = {
+	encode: function(val, key, encoding = "utf8", keyEncoding = "utf8", outputEncode = "base64") {
+		if (!["base64", "hex"].includes(outputEncode.toLowerCase())) return "";
+		if (!key || !val) return "";
+		const plaintext = parseEncode(val, encoding);
+		const v = parseEncode(key, keyEncoding);
+		return formatEncode(CryptoJS.RC4.encrypt(plaintext, v), outputEncode);
+	},
+	decode: function(val, key, encoding = "utf8", keyEncoding = "utf8", outputEncode = "base64") {
+		if (!["base64", "hex"].includes(encoding.toLowerCase())) return "";
+		if (!key || !val) return "";
+		const plaintext = parseEncode(val, encoding);
+		const v = parseEncode(key, keyEncoding);
+		return formatDecode(CryptoJS.RC4.toString(plaintext, v), outputEncode);
+	}
+};
+//#endregion
 //#region ../utils/api_helper.js
 /**
 * API辅助工具模块
@@ -42641,6 +42920,1021 @@ var ZstdCompress = class extends Zstd {
 var ZstdDecompress = class extends Zstd {
 	constructor(opts) {
 		super(opts, "ZstdDecompress");
+	}
+};
+//#endregion
+//#region ../node_modules/lru-cache/dist/mjs/index.js
+/**
+* @module LRUCache
+*/
+const perf = typeof performance === "object" && performance && typeof performance.now === "function" ? performance : Date;
+const warned = /* @__PURE__ */ new Set();
+/* c8 ignore start */
+const PROCESS = typeof process === "object" && !!process ? process : {};
+/* c8 ignore start */
+const emitWarning = (msg, type, code, fn) => {
+	typeof PROCESS.emitWarning === "function" ? PROCESS.emitWarning(msg, type, code, fn) : console.error(`[${code}] ${type}: ${msg}`);
+};
+let AC = globalThis.AbortController;
+let AS = globalThis.AbortSignal;
+/* c8 ignore start */
+if (typeof AC === "undefined") {
+	AS = class AbortSignal {
+		onabort;
+		_onabort = [];
+		reason;
+		aborted = false;
+		addEventListener(_, fn) {
+			this._onabort.push(fn);
+		}
+	};
+	AC = class AbortController {
+		constructor() {
+			warnACPolyfill();
+		}
+		signal = new AS();
+		abort(reason) {
+			if (this.signal.aborted) return;
+			this.signal.reason = reason;
+			this.signal.aborted = true;
+			for (const fn of this.signal._onabort) fn(reason);
+			this.signal.onabort?.(reason);
+		}
+	};
+	let printACPolyfillWarning = PROCESS.env?.LRU_CACHE_IGNORE_AC_WARNING !== "1";
+	const warnACPolyfill = () => {
+		if (!printACPolyfillWarning) return;
+		printACPolyfillWarning = false;
+		emitWarning("AbortController is not defined. If using lru-cache in node 14, load an AbortController polyfill from the `node-abort-controller` package. A minimal polyfill is provided for use by LRUCache.fetch(), but it should not be relied upon in other contexts (eg, passing it to other APIs that use AbortController/AbortSignal might have undesirable effects). You may disable this with LRU_CACHE_IGNORE_AC_WARNING=1 in the env.", "NO_ABORT_CONTROLLER", "ENOTSUP", warnACPolyfill);
+	};
+}
+/* c8 ignore stop */
+const shouldWarn = (code) => !warned.has(code);
+const TYPE = Symbol("type");
+const isPosInt = (n) => n && n === Math.floor(n) && n > 0 && isFinite(n);
+/* c8 ignore start */
+const getUintArray = (max) => !isPosInt(max) ? null : max <= Math.pow(2, 8) ? Uint8Array : max <= Math.pow(2, 16) ? Uint16Array : max <= Math.pow(2, 32) ? Uint32Array : max <= Number.MAX_SAFE_INTEGER ? ZeroArray : null;
+/* c8 ignore stop */
+var ZeroArray = class extends Array {
+	constructor(size) {
+		super(size);
+		this.fill(0);
+	}
+};
+var Stack = class Stack {
+	heap;
+	length;
+	static #constructing = false;
+	static create(max) {
+		const HeapCls = getUintArray(max);
+		if (!HeapCls) return [];
+		Stack.#constructing = true;
+		const s = new Stack(max, HeapCls);
+		Stack.#constructing = false;
+		return s;
+	}
+	constructor(max, HeapCls) {
+		/* c8 ignore start */
+		if (!Stack.#constructing) throw new TypeError("instantiate Stack using Stack.create(n)");
+		/* c8 ignore stop */
+		this.heap = new HeapCls(max);
+		this.length = 0;
+	}
+	push(n) {
+		this.heap[this.length++] = n;
+	}
+	pop() {
+		return this.heap[--this.length];
+	}
+};
+/**
+* Default export, the thing you're using this module to get.
+*
+* All properties from the options object (with the exception of
+* {@link OptionsBase.max} and {@link OptionsBase.maxSize}) are added as
+* normal public members. (`max` and `maxBase` are read-only getters.)
+* Changing any of these will alter the defaults for subsequent method calls,
+* but is otherwise safe.
+*/
+var LRUCache = class LRUCache {
+	#max;
+	#maxSize;
+	#dispose;
+	#disposeAfter;
+	#fetchMethod;
+	/**
+	* {@link LRUCache.OptionsBase.ttl}
+	*/
+	ttl;
+	/**
+	* {@link LRUCache.OptionsBase.ttlResolution}
+	*/
+	ttlResolution;
+	/**
+	* {@link LRUCache.OptionsBase.ttlAutopurge}
+	*/
+	ttlAutopurge;
+	/**
+	* {@link LRUCache.OptionsBase.updateAgeOnGet}
+	*/
+	updateAgeOnGet;
+	/**
+	* {@link LRUCache.OptionsBase.updateAgeOnHas}
+	*/
+	updateAgeOnHas;
+	/**
+	* {@link LRUCache.OptionsBase.allowStale}
+	*/
+	allowStale;
+	/**
+	* {@link LRUCache.OptionsBase.noDisposeOnSet}
+	*/
+	noDisposeOnSet;
+	/**
+	* {@link LRUCache.OptionsBase.noUpdateTTL}
+	*/
+	noUpdateTTL;
+	/**
+	* {@link LRUCache.OptionsBase.maxEntrySize}
+	*/
+	maxEntrySize;
+	/**
+	* {@link LRUCache.OptionsBase.sizeCalculation}
+	*/
+	sizeCalculation;
+	/**
+	* {@link LRUCache.OptionsBase.noDeleteOnFetchRejection}
+	*/
+	noDeleteOnFetchRejection;
+	/**
+	* {@link LRUCache.OptionsBase.noDeleteOnStaleGet}
+	*/
+	noDeleteOnStaleGet;
+	/**
+	* {@link LRUCache.OptionsBase.allowStaleOnFetchAbort}
+	*/
+	allowStaleOnFetchAbort;
+	/**
+	* {@link LRUCache.OptionsBase.allowStaleOnFetchRejection}
+	*/
+	allowStaleOnFetchRejection;
+	/**
+	* {@link LRUCache.OptionsBase.ignoreFetchAbort}
+	*/
+	ignoreFetchAbort;
+	#size;
+	#calculatedSize;
+	#keyMap;
+	#keyList;
+	#valList;
+	#next;
+	#prev;
+	#head;
+	#tail;
+	#free;
+	#disposed;
+	#sizes;
+	#starts;
+	#ttls;
+	#hasDispose;
+	#hasFetchMethod;
+	#hasDisposeAfter;
+	/**
+	* Do not call this method unless you need to inspect the
+	* inner workings of the cache.  If anything returned by this
+	* object is modified in any way, strange breakage may occur.
+	*
+	* These fields are private for a reason!
+	*
+	* @internal
+	*/
+	static unsafeExposeInternals(c) {
+		return {
+			starts: c.#starts,
+			ttls: c.#ttls,
+			sizes: c.#sizes,
+			keyMap: c.#keyMap,
+			keyList: c.#keyList,
+			valList: c.#valList,
+			next: c.#next,
+			prev: c.#prev,
+			get head() {
+				return c.#head;
+			},
+			get tail() {
+				return c.#tail;
+			},
+			free: c.#free,
+			isBackgroundFetch: (p) => c.#isBackgroundFetch(p),
+			backgroundFetch: (k, index, options, context) => c.#backgroundFetch(k, index, options, context),
+			moveToTail: (index) => c.#moveToTail(index),
+			indexes: (options) => c.#indexes(options),
+			rindexes: (options) => c.#rindexes(options),
+			isStale: (index) => c.#isStale(index)
+		};
+	}
+	/**
+	* {@link LRUCache.OptionsBase.max} (read-only)
+	*/
+	get max() {
+		return this.#max;
+	}
+	/**
+	* {@link LRUCache.OptionsBase.maxSize} (read-only)
+	*/
+	get maxSize() {
+		return this.#maxSize;
+	}
+	/**
+	* The total computed size of items in the cache (read-only)
+	*/
+	get calculatedSize() {
+		return this.#calculatedSize;
+	}
+	/**
+	* The number of items stored in the cache (read-only)
+	*/
+	get size() {
+		return this.#size;
+	}
+	/**
+	* {@link LRUCache.OptionsBase.fetchMethod} (read-only)
+	*/
+	get fetchMethod() {
+		return this.#fetchMethod;
+	}
+	/**
+	* {@link LRUCache.OptionsBase.dispose} (read-only)
+	*/
+	get dispose() {
+		return this.#dispose;
+	}
+	/**
+	* {@link LRUCache.OptionsBase.disposeAfter} (read-only)
+	*/
+	get disposeAfter() {
+		return this.#disposeAfter;
+	}
+	constructor(options) {
+		const { max = 0, ttl, ttlResolution = 1, ttlAutopurge, updateAgeOnGet, updateAgeOnHas, allowStale, dispose, disposeAfter, noDisposeOnSet, noUpdateTTL, maxSize = 0, maxEntrySize = 0, sizeCalculation, fetchMethod, noDeleteOnFetchRejection, noDeleteOnStaleGet, allowStaleOnFetchRejection, allowStaleOnFetchAbort, ignoreFetchAbort } = options;
+		if (max !== 0 && !isPosInt(max)) throw new TypeError("max option must be a nonnegative integer");
+		const UintArray = max ? getUintArray(max) : Array;
+		if (!UintArray) throw new Error("invalid max value: " + max);
+		this.#max = max;
+		this.#maxSize = maxSize;
+		this.maxEntrySize = maxEntrySize || this.#maxSize;
+		this.sizeCalculation = sizeCalculation;
+		if (this.sizeCalculation) {
+			if (!this.#maxSize && !this.maxEntrySize) throw new TypeError("cannot set sizeCalculation without setting maxSize or maxEntrySize");
+			if (typeof this.sizeCalculation !== "function") throw new TypeError("sizeCalculation set to non-function");
+		}
+		if (fetchMethod !== void 0 && typeof fetchMethod !== "function") throw new TypeError("fetchMethod must be a function if specified");
+		this.#fetchMethod = fetchMethod;
+		this.#hasFetchMethod = !!fetchMethod;
+		this.#keyMap = /* @__PURE__ */ new Map();
+		this.#keyList = new Array(max).fill(void 0);
+		this.#valList = new Array(max).fill(void 0);
+		this.#next = new UintArray(max);
+		this.#prev = new UintArray(max);
+		this.#head = 0;
+		this.#tail = 0;
+		this.#free = Stack.create(max);
+		this.#size = 0;
+		this.#calculatedSize = 0;
+		if (typeof dispose === "function") this.#dispose = dispose;
+		if (typeof disposeAfter === "function") {
+			this.#disposeAfter = disposeAfter;
+			this.#disposed = [];
+		} else {
+			this.#disposeAfter = void 0;
+			this.#disposed = void 0;
+		}
+		this.#hasDispose = !!this.#dispose;
+		this.#hasDisposeAfter = !!this.#disposeAfter;
+		this.noDisposeOnSet = !!noDisposeOnSet;
+		this.noUpdateTTL = !!noUpdateTTL;
+		this.noDeleteOnFetchRejection = !!noDeleteOnFetchRejection;
+		this.allowStaleOnFetchRejection = !!allowStaleOnFetchRejection;
+		this.allowStaleOnFetchAbort = !!allowStaleOnFetchAbort;
+		this.ignoreFetchAbort = !!ignoreFetchAbort;
+		if (this.maxEntrySize !== 0) {
+			if (this.#maxSize !== 0) {
+				if (!isPosInt(this.#maxSize)) throw new TypeError("maxSize must be a positive integer if specified");
+			}
+			if (!isPosInt(this.maxEntrySize)) throw new TypeError("maxEntrySize must be a positive integer if specified");
+			this.#initializeSizeTracking();
+		}
+		this.allowStale = !!allowStale;
+		this.noDeleteOnStaleGet = !!noDeleteOnStaleGet;
+		this.updateAgeOnGet = !!updateAgeOnGet;
+		this.updateAgeOnHas = !!updateAgeOnHas;
+		this.ttlResolution = isPosInt(ttlResolution) || ttlResolution === 0 ? ttlResolution : 1;
+		this.ttlAutopurge = !!ttlAutopurge;
+		this.ttl = ttl || 0;
+		if (this.ttl) {
+			if (!isPosInt(this.ttl)) throw new TypeError("ttl must be a positive integer if specified");
+			this.#initializeTTLTracking();
+		}
+		if (this.#max === 0 && this.ttl === 0 && this.#maxSize === 0) throw new TypeError("At least one of max, maxSize, or ttl is required");
+		if (!this.ttlAutopurge && !this.#max && !this.#maxSize) {
+			const code = "LRU_CACHE_UNBOUNDED";
+			if (shouldWarn(code)) {
+				warned.add(code);
+				emitWarning("TTL caching without ttlAutopurge, max, or maxSize can result in unbounded memory consumption.", "UnboundedCacheWarning", code, LRUCache);
+			}
+		}
+	}
+	/**
+	* Return the remaining TTL time for a given entry key
+	*/
+	getRemainingTTL(key) {
+		return this.#keyMap.has(key) ? Infinity : 0;
+	}
+	#initializeTTLTracking() {
+		const ttls = new ZeroArray(this.#max);
+		const starts = new ZeroArray(this.#max);
+		this.#ttls = ttls;
+		this.#starts = starts;
+		this.#setItemTTL = (index, ttl, start = perf.now()) => {
+			starts[index] = ttl !== 0 ? start : 0;
+			ttls[index] = ttl;
+			if (ttl !== 0 && this.ttlAutopurge) {
+				const t = setTimeout(() => {
+					if (this.#isStale(index)) this.delete(this.#keyList[index]);
+				}, ttl + 1);
+				/* c8 ignore start */
+				if (t.unref) t.unref();
+			}
+		};
+		this.#updateItemAge = (index) => {
+			starts[index] = ttls[index] !== 0 ? perf.now() : 0;
+		};
+		this.#statusTTL = (status, index) => {
+			if (ttls[index]) {
+				const ttl = ttls[index];
+				const start = starts[index];
+				status.ttl = ttl;
+				status.start = start;
+				status.now = cachedNow || getNow();
+				status.remainingTTL = ttl - (status.now - start);
+			}
+		};
+		let cachedNow = 0;
+		const getNow = () => {
+			const n = perf.now();
+			if (this.ttlResolution > 0) {
+				cachedNow = n;
+				const t = setTimeout(() => cachedNow = 0, this.ttlResolution);
+				/* c8 ignore start */
+				if (t.unref) t.unref();
+			}
+			return n;
+		};
+		this.getRemainingTTL = (key) => {
+			const index = this.#keyMap.get(key);
+			if (index === void 0) return 0;
+			const ttl = ttls[index];
+			const start = starts[index];
+			if (ttl === 0 || start === 0) return Infinity;
+			return ttl - ((cachedNow || getNow()) - start);
+		};
+		this.#isStale = (index) => {
+			return ttls[index] !== 0 && starts[index] !== 0 && (cachedNow || getNow()) - starts[index] > ttls[index];
+		};
+	}
+	#updateItemAge = () => {};
+	#statusTTL = () => {};
+	#setItemTTL = () => {};
+	/* c8 ignore stop */
+	#isStale = () => false;
+	#initializeSizeTracking() {
+		const sizes = new ZeroArray(this.#max);
+		this.#calculatedSize = 0;
+		this.#sizes = sizes;
+		this.#removeItemSize = (index) => {
+			this.#calculatedSize -= sizes[index];
+			sizes[index] = 0;
+		};
+		this.#requireSize = (k, v, size, sizeCalculation) => {
+			if (this.#isBackgroundFetch(v)) return 0;
+			if (!isPosInt(size)) if (sizeCalculation) {
+				if (typeof sizeCalculation !== "function") throw new TypeError("sizeCalculation must be a function");
+				size = sizeCalculation(v, k);
+				if (!isPosInt(size)) throw new TypeError("sizeCalculation return invalid (expect positive integer)");
+			} else throw new TypeError("invalid size value (must be positive integer). When maxSize or maxEntrySize is used, sizeCalculation or size must be set.");
+			return size;
+		};
+		this.#addItemSize = (index, size, status) => {
+			sizes[index] = size;
+			if (this.#maxSize) {
+				const maxSize = this.#maxSize - sizes[index];
+				while (this.#calculatedSize > maxSize) this.#evict(true);
+			}
+			this.#calculatedSize += sizes[index];
+			if (status) {
+				status.entrySize = size;
+				status.totalCalculatedSize = this.#calculatedSize;
+			}
+		};
+	}
+	#removeItemSize = (_i) => {};
+	#addItemSize = (_i, _s, _st) => {};
+	#requireSize = (_k, _v, size, sizeCalculation) => {
+		if (size || sizeCalculation) throw new TypeError("cannot set size without setting maxSize or maxEntrySize on cache");
+		return 0;
+	};
+	*#indexes({ allowStale = this.allowStale } = {}) {
+		if (this.#size) for (let i = this.#tail;;) {
+			if (!this.#isValidIndex(i)) break;
+			if (allowStale || !this.#isStale(i)) yield i;
+			if (i === this.#head) break;
+			else i = this.#prev[i];
+		}
+	}
+	*#rindexes({ allowStale = this.allowStale } = {}) {
+		if (this.#size) for (let i = this.#head;;) {
+			if (!this.#isValidIndex(i)) break;
+			if (allowStale || !this.#isStale(i)) yield i;
+			if (i === this.#tail) break;
+			else i = this.#next[i];
+		}
+	}
+	#isValidIndex(index) {
+		return index !== void 0 && this.#keyMap.get(this.#keyList[index]) === index;
+	}
+	/**
+	* Return a generator yielding `[key, value]` pairs,
+	* in order from most recently used to least recently used.
+	*/
+	*entries() {
+		for (const i of this.#indexes()) if (this.#valList[i] !== void 0 && this.#keyList[i] !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield [this.#keyList[i], this.#valList[i]];
+	}
+	/**
+	* Inverse order version of {@link LRUCache.entries}
+	*
+	* Return a generator yielding `[key, value]` pairs,
+	* in order from least recently used to most recently used.
+	*/
+	*rentries() {
+		for (const i of this.#rindexes()) if (this.#valList[i] !== void 0 && this.#keyList[i] !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield [this.#keyList[i], this.#valList[i]];
+	}
+	/**
+	* Return a generator yielding the keys in the cache,
+	* in order from most recently used to least recently used.
+	*/
+	*keys() {
+		for (const i of this.#indexes()) {
+			const k = this.#keyList[i];
+			if (k !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield k;
+		}
+	}
+	/**
+	* Inverse order version of {@link LRUCache.keys}
+	*
+	* Return a generator yielding the keys in the cache,
+	* in order from least recently used to most recently used.
+	*/
+	*rkeys() {
+		for (const i of this.#rindexes()) {
+			const k = this.#keyList[i];
+			if (k !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield k;
+		}
+	}
+	/**
+	* Return a generator yielding the values in the cache,
+	* in order from most recently used to least recently used.
+	*/
+	*values() {
+		for (const i of this.#indexes()) if (this.#valList[i] !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield this.#valList[i];
+	}
+	/**
+	* Inverse order version of {@link LRUCache.values}
+	*
+	* Return a generator yielding the values in the cache,
+	* in order from least recently used to most recently used.
+	*/
+	*rvalues() {
+		for (const i of this.#rindexes()) if (this.#valList[i] !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield this.#valList[i];
+	}
+	/**
+	* Iterating over the cache itself yields the same results as
+	* {@link LRUCache.entries}
+	*/
+	[Symbol.iterator]() {
+		return this.entries();
+	}
+	/**
+	* Find a value for which the supplied fn method returns a truthy value,
+	* similar to Array.find().  fn is called as fn(value, key, cache).
+	*/
+	find(fn, getOptions = {}) {
+		for (const i of this.#indexes()) {
+			const v = this.#valList[i];
+			const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
+			if (value === void 0) continue;
+			if (fn(value, this.#keyList[i], this)) return this.get(this.#keyList[i], getOptions);
+		}
+	}
+	/**
+	* Call the supplied function on each item in the cache, in order from
+	* most recently used to least recently used.  fn is called as
+	* fn(value, key, cache).  Does not update age or recenty of use.
+	* Does not iterate over stale values.
+	*/
+	forEach(fn, thisp = this) {
+		for (const i of this.#indexes()) {
+			const v = this.#valList[i];
+			const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
+			if (value === void 0) continue;
+			fn.call(thisp, value, this.#keyList[i], this);
+		}
+	}
+	/**
+	* The same as {@link LRUCache.forEach} but items are iterated over in
+	* reverse order.  (ie, less recently used items are iterated over first.)
+	*/
+	rforEach(fn, thisp = this) {
+		for (const i of this.#rindexes()) {
+			const v = this.#valList[i];
+			const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
+			if (value === void 0) continue;
+			fn.call(thisp, value, this.#keyList[i], this);
+		}
+	}
+	/**
+	* Delete any stale entries. Returns true if anything was removed,
+	* false otherwise.
+	*/
+	purgeStale() {
+		let deleted = false;
+		for (const i of this.#rindexes({ allowStale: true })) if (this.#isStale(i)) {
+			this.delete(this.#keyList[i]);
+			deleted = true;
+		}
+		return deleted;
+	}
+	/**
+	* Return an array of [key, {@link LRUCache.Entry}] tuples which can be
+	* passed to cache.load()
+	*/
+	dump() {
+		const arr = [];
+		for (const i of this.#indexes({ allowStale: true })) {
+			const key = this.#keyList[i];
+			const v = this.#valList[i];
+			const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
+			if (value === void 0 || key === void 0) continue;
+			const entry = { value };
+			if (this.#ttls && this.#starts) {
+				entry.ttl = this.#ttls[i];
+				const age = perf.now() - this.#starts[i];
+				entry.start = Math.floor(Date.now() - age);
+			}
+			if (this.#sizes) entry.size = this.#sizes[i];
+			arr.unshift([key, entry]);
+		}
+		return arr;
+	}
+	/**
+	* Reset the cache and load in the items in entries in the order listed.
+	* Note that the shape of the resulting cache may be different if the
+	* same options are not used in both caches.
+	*/
+	load(arr) {
+		this.clear();
+		for (const [key, entry] of arr) {
+			if (entry.start) {
+				const age = Date.now() - entry.start;
+				entry.start = perf.now() - age;
+			}
+			this.set(key, entry.value, entry);
+		}
+	}
+	/**
+	* Add a value to the cache.
+	*
+	* Note: if `undefined` is specified as a value, this is an alias for
+	* {@link LRUCache#delete}
+	*/
+	set(k, v, setOptions = {}) {
+		if (v === void 0) {
+			this.delete(k);
+			return this;
+		}
+		const { ttl = this.ttl, start, noDisposeOnSet = this.noDisposeOnSet, sizeCalculation = this.sizeCalculation, status } = setOptions;
+		let { noUpdateTTL = this.noUpdateTTL } = setOptions;
+		const size = this.#requireSize(k, v, setOptions.size || 0, sizeCalculation);
+		if (this.maxEntrySize && size > this.maxEntrySize) {
+			if (status) {
+				status.set = "miss";
+				status.maxEntrySizeExceeded = true;
+			}
+			this.delete(k);
+			return this;
+		}
+		let index = this.#size === 0 ? void 0 : this.#keyMap.get(k);
+		if (index === void 0) {
+			index = this.#size === 0 ? this.#tail : this.#free.length !== 0 ? this.#free.pop() : this.#size === this.#max ? this.#evict(false) : this.#size;
+			this.#keyList[index] = k;
+			this.#valList[index] = v;
+			this.#keyMap.set(k, index);
+			this.#next[this.#tail] = index;
+			this.#prev[index] = this.#tail;
+			this.#tail = index;
+			this.#size++;
+			this.#addItemSize(index, size, status);
+			if (status) status.set = "add";
+			noUpdateTTL = false;
+		} else {
+			this.#moveToTail(index);
+			const oldVal = this.#valList[index];
+			if (v !== oldVal) {
+				if (this.#hasFetchMethod && this.#isBackgroundFetch(oldVal)) oldVal.__abortController.abort(/* @__PURE__ */ new Error("replaced"));
+				else if (!noDisposeOnSet) {
+					if (this.#hasDispose) this.#dispose?.(oldVal, k, "set");
+					if (this.#hasDisposeAfter) this.#disposed?.push([
+						oldVal,
+						k,
+						"set"
+					]);
+				}
+				this.#removeItemSize(index);
+				this.#addItemSize(index, size, status);
+				this.#valList[index] = v;
+				if (status) {
+					status.set = "replace";
+					const oldValue = oldVal && this.#isBackgroundFetch(oldVal) ? oldVal.__staleWhileFetching : oldVal;
+					if (oldValue !== void 0) status.oldValue = oldValue;
+				}
+			} else if (status) status.set = "update";
+		}
+		if (ttl !== 0 && !this.#ttls) this.#initializeTTLTracking();
+		if (this.#ttls) {
+			if (!noUpdateTTL) this.#setItemTTL(index, ttl, start);
+			if (status) this.#statusTTL(status, index);
+		}
+		if (!noDisposeOnSet && this.#hasDisposeAfter && this.#disposed) {
+			const dt = this.#disposed;
+			let task;
+			while (task = dt?.shift()) this.#disposeAfter?.(...task);
+		}
+		return this;
+	}
+	/**
+	* Evict the least recently used item, returning its value or
+	* `undefined` if cache is empty.
+	*/
+	pop() {
+		try {
+			while (this.#size) {
+				const val = this.#valList[this.#head];
+				this.#evict(true);
+				if (this.#isBackgroundFetch(val)) {
+					if (val.__staleWhileFetching) return val.__staleWhileFetching;
+				} else if (val !== void 0) return val;
+			}
+		} finally {
+			if (this.#hasDisposeAfter && this.#disposed) {
+				const dt = this.#disposed;
+				let task;
+				while (task = dt?.shift()) this.#disposeAfter?.(...task);
+			}
+		}
+	}
+	#evict(free) {
+		const head = this.#head;
+		const k = this.#keyList[head];
+		const v = this.#valList[head];
+		if (this.#hasFetchMethod && this.#isBackgroundFetch(v)) v.__abortController.abort(/* @__PURE__ */ new Error("evicted"));
+		else if (this.#hasDispose || this.#hasDisposeAfter) {
+			if (this.#hasDispose) this.#dispose?.(v, k, "evict");
+			if (this.#hasDisposeAfter) this.#disposed?.push([
+				v,
+				k,
+				"evict"
+			]);
+		}
+		this.#removeItemSize(head);
+		if (free) {
+			this.#keyList[head] = void 0;
+			this.#valList[head] = void 0;
+			this.#free.push(head);
+		}
+		if (this.#size === 1) {
+			this.#head = this.#tail = 0;
+			this.#free.length = 0;
+		} else this.#head = this.#next[head];
+		this.#keyMap.delete(k);
+		this.#size--;
+		return head;
+	}
+	/**
+	* Check if a key is in the cache, without updating the recency of use.
+	* Will return false if the item is stale, even though it is technically
+	* in the cache.
+	*
+	* Will not update item age unless
+	* {@link LRUCache.OptionsBase.updateAgeOnHas} is set.
+	*/
+	has(k, hasOptions = {}) {
+		const { updateAgeOnHas = this.updateAgeOnHas, status } = hasOptions;
+		const index = this.#keyMap.get(k);
+		if (index !== void 0) {
+			const v = this.#valList[index];
+			if (this.#isBackgroundFetch(v) && v.__staleWhileFetching === void 0) return false;
+			if (!this.#isStale(index)) {
+				if (updateAgeOnHas) this.#updateItemAge(index);
+				if (status) {
+					status.has = "hit";
+					this.#statusTTL(status, index);
+				}
+				return true;
+			} else if (status) {
+				status.has = "stale";
+				this.#statusTTL(status, index);
+			}
+		} else if (status) status.has = "miss";
+		return false;
+	}
+	/**
+	* Like {@link LRUCache#get} but doesn't update recency or delete stale
+	* items.
+	*
+	* Returns `undefined` if the item is stale, unless
+	* {@link LRUCache.OptionsBase.allowStale} is set.
+	*/
+	peek(k, peekOptions = {}) {
+		const { allowStale = this.allowStale } = peekOptions;
+		const index = this.#keyMap.get(k);
+		if (index !== void 0 && (allowStale || !this.#isStale(index))) {
+			const v = this.#valList[index];
+			return this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
+		}
+	}
+	#backgroundFetch(k, index, options, context) {
+		const v = index === void 0 ? void 0 : this.#valList[index];
+		if (this.#isBackgroundFetch(v)) return v;
+		const ac = new AC();
+		const { signal } = options;
+		signal?.addEventListener("abort", () => ac.abort(signal.reason), { signal: ac.signal });
+		const fetchOpts = {
+			signal: ac.signal,
+			options,
+			context
+		};
+		const cb = (v, updateCache = false) => {
+			const { aborted } = ac.signal;
+			const ignoreAbort = options.ignoreFetchAbort && v !== void 0;
+			if (options.status) if (aborted && !updateCache) {
+				options.status.fetchAborted = true;
+				options.status.fetchError = ac.signal.reason;
+				if (ignoreAbort) options.status.fetchAbortIgnored = true;
+			} else options.status.fetchResolved = true;
+			if (aborted && !ignoreAbort && !updateCache) return fetchFail(ac.signal.reason);
+			const bf = p;
+			if (this.#valList[index] === p) if (v === void 0) if (bf.__staleWhileFetching) this.#valList[index] = bf.__staleWhileFetching;
+			else this.delete(k);
+			else {
+				if (options.status) options.status.fetchUpdated = true;
+				this.set(k, v, fetchOpts.options);
+			}
+			return v;
+		};
+		const eb = (er) => {
+			if (options.status) {
+				options.status.fetchRejected = true;
+				options.status.fetchError = er;
+			}
+			return fetchFail(er);
+		};
+		const fetchFail = (er) => {
+			const { aborted } = ac.signal;
+			const allowStaleAborted = aborted && options.allowStaleOnFetchAbort;
+			const allowStale = allowStaleAborted || options.allowStaleOnFetchRejection;
+			const noDelete = allowStale || options.noDeleteOnFetchRejection;
+			const bf = p;
+			if (this.#valList[index] === p) {
+				if (!noDelete || bf.__staleWhileFetching === void 0) this.delete(k);
+				else if (!allowStaleAborted) this.#valList[index] = bf.__staleWhileFetching;
+			}
+			if (allowStale) {
+				if (options.status && bf.__staleWhileFetching !== void 0) options.status.returnedStale = true;
+				return bf.__staleWhileFetching;
+			} else if (bf.__returned === bf) throw er;
+		};
+		const pcall = (res, rej) => {
+			const fmp = this.#fetchMethod?.(k, v, fetchOpts);
+			if (fmp && fmp instanceof Promise) fmp.then((v) => res(v), rej);
+			ac.signal.addEventListener("abort", () => {
+				if (!options.ignoreFetchAbort || options.allowStaleOnFetchAbort) {
+					res();
+					if (options.allowStaleOnFetchAbort) res = (v) => cb(v, true);
+				}
+			});
+		};
+		if (options.status) options.status.fetchDispatched = true;
+		const p = new Promise(pcall).then(cb, eb);
+		const bf = Object.assign(p, {
+			__abortController: ac,
+			__staleWhileFetching: v,
+			__returned: void 0
+		});
+		if (index === void 0) {
+			this.set(k, bf, {
+				...fetchOpts.options,
+				status: void 0
+			});
+			index = this.#keyMap.get(k);
+		} else this.#valList[index] = bf;
+		return bf;
+	}
+	#isBackgroundFetch(p) {
+		if (!this.#hasFetchMethod) return false;
+		const b = p;
+		return !!b && b instanceof Promise && b.hasOwnProperty("__staleWhileFetching") && b.__abortController instanceof AC;
+	}
+	async fetch(k, fetchOptions = {}) {
+		const { allowStale = this.allowStale, updateAgeOnGet = this.updateAgeOnGet, noDeleteOnStaleGet = this.noDeleteOnStaleGet, ttl = this.ttl, noDisposeOnSet = this.noDisposeOnSet, size = 0, sizeCalculation = this.sizeCalculation, noUpdateTTL = this.noUpdateTTL, noDeleteOnFetchRejection = this.noDeleteOnFetchRejection, allowStaleOnFetchRejection = this.allowStaleOnFetchRejection, ignoreFetchAbort = this.ignoreFetchAbort, allowStaleOnFetchAbort = this.allowStaleOnFetchAbort, context, forceRefresh = false, status, signal } = fetchOptions;
+		if (!this.#hasFetchMethod) {
+			if (status) status.fetch = "get";
+			return this.get(k, {
+				allowStale,
+				updateAgeOnGet,
+				noDeleteOnStaleGet,
+				status
+			});
+		}
+		const options = {
+			allowStale,
+			updateAgeOnGet,
+			noDeleteOnStaleGet,
+			ttl,
+			noDisposeOnSet,
+			size,
+			sizeCalculation,
+			noUpdateTTL,
+			noDeleteOnFetchRejection,
+			allowStaleOnFetchRejection,
+			allowStaleOnFetchAbort,
+			ignoreFetchAbort,
+			status,
+			signal
+		};
+		let index = this.#keyMap.get(k);
+		if (index === void 0) {
+			if (status) status.fetch = "miss";
+			const p = this.#backgroundFetch(k, index, options, context);
+			return p.__returned = p;
+		} else {
+			const v = this.#valList[index];
+			if (this.#isBackgroundFetch(v)) {
+				const stale = allowStale && v.__staleWhileFetching !== void 0;
+				if (status) {
+					status.fetch = "inflight";
+					if (stale) status.returnedStale = true;
+				}
+				return stale ? v.__staleWhileFetching : v.__returned = v;
+			}
+			const isStale = this.#isStale(index);
+			if (!forceRefresh && !isStale) {
+				if (status) status.fetch = "hit";
+				this.#moveToTail(index);
+				if (updateAgeOnGet) this.#updateItemAge(index);
+				if (status) this.#statusTTL(status, index);
+				return v;
+			}
+			const p = this.#backgroundFetch(k, index, options, context);
+			const staleVal = p.__staleWhileFetching !== void 0 && allowStale;
+			if (status) {
+				status.fetch = isStale ? "stale" : "refresh";
+				if (staleVal && isStale) status.returnedStale = true;
+			}
+			return staleVal ? p.__staleWhileFetching : p.__returned = p;
+		}
+	}
+	/**
+	* Return a value from the cache. Will update the recency of the cache
+	* entry found.
+	*
+	* If the key is not found, get() will return `undefined`.
+	*/
+	get(k, getOptions = {}) {
+		const { allowStale = this.allowStale, updateAgeOnGet = this.updateAgeOnGet, noDeleteOnStaleGet = this.noDeleteOnStaleGet, status } = getOptions;
+		const index = this.#keyMap.get(k);
+		if (index !== void 0) {
+			const value = this.#valList[index];
+			const fetching = this.#isBackgroundFetch(value);
+			if (status) this.#statusTTL(status, index);
+			if (this.#isStale(index)) {
+				if (status) status.get = "stale";
+				if (!fetching) {
+					if (!noDeleteOnStaleGet) this.delete(k);
+					if (status && allowStale) status.returnedStale = true;
+					return allowStale ? value : void 0;
+				} else {
+					if (status && allowStale && value.__staleWhileFetching !== void 0) status.returnedStale = true;
+					return allowStale ? value.__staleWhileFetching : void 0;
+				}
+			} else {
+				if (status) status.get = "hit";
+				if (fetching) return value.__staleWhileFetching;
+				this.#moveToTail(index);
+				if (updateAgeOnGet) this.#updateItemAge(index);
+				return value;
+			}
+		} else if (status) status.get = "miss";
+	}
+	#connect(p, n) {
+		this.#prev[n] = p;
+		this.#next[p] = n;
+	}
+	#moveToTail(index) {
+		if (index !== this.#tail) {
+			if (index === this.#head) this.#head = this.#next[index];
+			else this.#connect(this.#prev[index], this.#next[index]);
+			this.#connect(this.#tail, index);
+			this.#tail = index;
+		}
+	}
+	/**
+	* Deletes a key out of the cache.
+	* Returns true if the key was deleted, false otherwise.
+	*/
+	delete(k) {
+		let deleted = false;
+		if (this.#size !== 0) {
+			const index = this.#keyMap.get(k);
+			if (index !== void 0) {
+				deleted = true;
+				if (this.#size === 1) this.clear();
+				else {
+					this.#removeItemSize(index);
+					const v = this.#valList[index];
+					if (this.#isBackgroundFetch(v)) v.__abortController.abort(/* @__PURE__ */ new Error("deleted"));
+					else if (this.#hasDispose || this.#hasDisposeAfter) {
+						if (this.#hasDispose) this.#dispose?.(v, k, "delete");
+						if (this.#hasDisposeAfter) this.#disposed?.push([
+							v,
+							k,
+							"delete"
+						]);
+					}
+					this.#keyMap.delete(k);
+					this.#keyList[index] = void 0;
+					this.#valList[index] = void 0;
+					if (index === this.#tail) this.#tail = this.#prev[index];
+					else if (index === this.#head) this.#head = this.#next[index];
+					else {
+						this.#next[this.#prev[index]] = this.#next[index];
+						this.#prev[this.#next[index]] = this.#prev[index];
+					}
+					this.#size--;
+					this.#free.push(index);
+				}
+			}
+		}
+		if (this.#hasDisposeAfter && this.#disposed?.length) {
+			const dt = this.#disposed;
+			let task;
+			while (task = dt?.shift()) this.#disposeAfter?.(...task);
+		}
+		return deleted;
+	}
+	/**
+	* Clear the cache entirely, throwing away all values.
+	*/
+	clear() {
+		for (const index of this.#rindexes({ allowStale: true })) {
+			const v = this.#valList[index];
+			if (this.#isBackgroundFetch(v)) v.__abortController.abort(/* @__PURE__ */ new Error("deleted"));
+			else {
+				const k = this.#keyList[index];
+				if (this.#hasDispose) this.#dispose?.(v, k, "delete");
+				if (this.#hasDisposeAfter) this.#disposed?.push([
+					v,
+					k,
+					"delete"
+				]);
+			}
+		}
+		this.#keyMap.clear();
+		this.#valList.fill(void 0);
+		this.#keyList.fill(void 0);
+		if (this.#ttls && this.#starts) {
+			this.#ttls.fill(0);
+			this.#starts.fill(0);
+		}
+		if (this.#sizes) this.#sizes.fill(0);
+		this.#head = 0;
+		this.#tail = 0;
+		this.#free.length = 0;
+		this.#calculatedSize = 0;
+		this.#size = 0;
+		if (this.#hasDisposeAfter && this.#disposed) {
+			const dt = this.#disposed;
+			let task;
+			while (task = dt?.shift()) this.#disposeAfter?.(...task);
+		}
 	}
 };
 //#endregion
@@ -73644,1022 +74938,6 @@ var require_dist$4 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	}
 }));
 //#endregion
-//#region ../node_modules/lru-cache/dist/mjs/index.js
-var import_dist$1 = require_dist$4();
-/**
-* @module LRUCache
-*/
-const perf = typeof performance === "object" && performance && typeof performance.now === "function" ? performance : Date;
-const warned = /* @__PURE__ */ new Set();
-/* c8 ignore start */
-const PROCESS = typeof process === "object" && !!process ? process : {};
-/* c8 ignore start */
-const emitWarning = (msg, type, code, fn) => {
-	typeof PROCESS.emitWarning === "function" ? PROCESS.emitWarning(msg, type, code, fn) : console.error(`[${code}] ${type}: ${msg}`);
-};
-let AC = globalThis.AbortController;
-let AS = globalThis.AbortSignal;
-/* c8 ignore start */
-if (typeof AC === "undefined") {
-	AS = class AbortSignal {
-		onabort;
-		_onabort = [];
-		reason;
-		aborted = false;
-		addEventListener(_, fn) {
-			this._onabort.push(fn);
-		}
-	};
-	AC = class AbortController {
-		constructor() {
-			warnACPolyfill();
-		}
-		signal = new AS();
-		abort(reason) {
-			if (this.signal.aborted) return;
-			this.signal.reason = reason;
-			this.signal.aborted = true;
-			for (const fn of this.signal._onabort) fn(reason);
-			this.signal.onabort?.(reason);
-		}
-	};
-	let printACPolyfillWarning = PROCESS.env?.LRU_CACHE_IGNORE_AC_WARNING !== "1";
-	const warnACPolyfill = () => {
-		if (!printACPolyfillWarning) return;
-		printACPolyfillWarning = false;
-		emitWarning("AbortController is not defined. If using lru-cache in node 14, load an AbortController polyfill from the `node-abort-controller` package. A minimal polyfill is provided for use by LRUCache.fetch(), but it should not be relied upon in other contexts (eg, passing it to other APIs that use AbortController/AbortSignal might have undesirable effects). You may disable this with LRU_CACHE_IGNORE_AC_WARNING=1 in the env.", "NO_ABORT_CONTROLLER", "ENOTSUP", warnACPolyfill);
-	};
-}
-/* c8 ignore stop */
-const shouldWarn = (code) => !warned.has(code);
-const TYPE = Symbol("type");
-const isPosInt = (n) => n && n === Math.floor(n) && n > 0 && isFinite(n);
-/* c8 ignore start */
-const getUintArray = (max) => !isPosInt(max) ? null : max <= Math.pow(2, 8) ? Uint8Array : max <= Math.pow(2, 16) ? Uint16Array : max <= Math.pow(2, 32) ? Uint32Array : max <= Number.MAX_SAFE_INTEGER ? ZeroArray : null;
-/* c8 ignore stop */
-var ZeroArray = class extends Array {
-	constructor(size) {
-		super(size);
-		this.fill(0);
-	}
-};
-var Stack = class Stack {
-	heap;
-	length;
-	static #constructing = false;
-	static create(max) {
-		const HeapCls = getUintArray(max);
-		if (!HeapCls) return [];
-		Stack.#constructing = true;
-		const s = new Stack(max, HeapCls);
-		Stack.#constructing = false;
-		return s;
-	}
-	constructor(max, HeapCls) {
-		/* c8 ignore start */
-		if (!Stack.#constructing) throw new TypeError("instantiate Stack using Stack.create(n)");
-		/* c8 ignore stop */
-		this.heap = new HeapCls(max);
-		this.length = 0;
-	}
-	push(n) {
-		this.heap[this.length++] = n;
-	}
-	pop() {
-		return this.heap[--this.length];
-	}
-};
-/**
-* Default export, the thing you're using this module to get.
-*
-* All properties from the options object (with the exception of
-* {@link OptionsBase.max} and {@link OptionsBase.maxSize}) are added as
-* normal public members. (`max` and `maxBase` are read-only getters.)
-* Changing any of these will alter the defaults for subsequent method calls,
-* but is otherwise safe.
-*/
-var LRUCache = class LRUCache {
-	#max;
-	#maxSize;
-	#dispose;
-	#disposeAfter;
-	#fetchMethod;
-	/**
-	* {@link LRUCache.OptionsBase.ttl}
-	*/
-	ttl;
-	/**
-	* {@link LRUCache.OptionsBase.ttlResolution}
-	*/
-	ttlResolution;
-	/**
-	* {@link LRUCache.OptionsBase.ttlAutopurge}
-	*/
-	ttlAutopurge;
-	/**
-	* {@link LRUCache.OptionsBase.updateAgeOnGet}
-	*/
-	updateAgeOnGet;
-	/**
-	* {@link LRUCache.OptionsBase.updateAgeOnHas}
-	*/
-	updateAgeOnHas;
-	/**
-	* {@link LRUCache.OptionsBase.allowStale}
-	*/
-	allowStale;
-	/**
-	* {@link LRUCache.OptionsBase.noDisposeOnSet}
-	*/
-	noDisposeOnSet;
-	/**
-	* {@link LRUCache.OptionsBase.noUpdateTTL}
-	*/
-	noUpdateTTL;
-	/**
-	* {@link LRUCache.OptionsBase.maxEntrySize}
-	*/
-	maxEntrySize;
-	/**
-	* {@link LRUCache.OptionsBase.sizeCalculation}
-	*/
-	sizeCalculation;
-	/**
-	* {@link LRUCache.OptionsBase.noDeleteOnFetchRejection}
-	*/
-	noDeleteOnFetchRejection;
-	/**
-	* {@link LRUCache.OptionsBase.noDeleteOnStaleGet}
-	*/
-	noDeleteOnStaleGet;
-	/**
-	* {@link LRUCache.OptionsBase.allowStaleOnFetchAbort}
-	*/
-	allowStaleOnFetchAbort;
-	/**
-	* {@link LRUCache.OptionsBase.allowStaleOnFetchRejection}
-	*/
-	allowStaleOnFetchRejection;
-	/**
-	* {@link LRUCache.OptionsBase.ignoreFetchAbort}
-	*/
-	ignoreFetchAbort;
-	#size;
-	#calculatedSize;
-	#keyMap;
-	#keyList;
-	#valList;
-	#next;
-	#prev;
-	#head;
-	#tail;
-	#free;
-	#disposed;
-	#sizes;
-	#starts;
-	#ttls;
-	#hasDispose;
-	#hasFetchMethod;
-	#hasDisposeAfter;
-	/**
-	* Do not call this method unless you need to inspect the
-	* inner workings of the cache.  If anything returned by this
-	* object is modified in any way, strange breakage may occur.
-	*
-	* These fields are private for a reason!
-	*
-	* @internal
-	*/
-	static unsafeExposeInternals(c) {
-		return {
-			starts: c.#starts,
-			ttls: c.#ttls,
-			sizes: c.#sizes,
-			keyMap: c.#keyMap,
-			keyList: c.#keyList,
-			valList: c.#valList,
-			next: c.#next,
-			prev: c.#prev,
-			get head() {
-				return c.#head;
-			},
-			get tail() {
-				return c.#tail;
-			},
-			free: c.#free,
-			isBackgroundFetch: (p) => c.#isBackgroundFetch(p),
-			backgroundFetch: (k, index, options, context) => c.#backgroundFetch(k, index, options, context),
-			moveToTail: (index) => c.#moveToTail(index),
-			indexes: (options) => c.#indexes(options),
-			rindexes: (options) => c.#rindexes(options),
-			isStale: (index) => c.#isStale(index)
-		};
-	}
-	/**
-	* {@link LRUCache.OptionsBase.max} (read-only)
-	*/
-	get max() {
-		return this.#max;
-	}
-	/**
-	* {@link LRUCache.OptionsBase.maxSize} (read-only)
-	*/
-	get maxSize() {
-		return this.#maxSize;
-	}
-	/**
-	* The total computed size of items in the cache (read-only)
-	*/
-	get calculatedSize() {
-		return this.#calculatedSize;
-	}
-	/**
-	* The number of items stored in the cache (read-only)
-	*/
-	get size() {
-		return this.#size;
-	}
-	/**
-	* {@link LRUCache.OptionsBase.fetchMethod} (read-only)
-	*/
-	get fetchMethod() {
-		return this.#fetchMethod;
-	}
-	/**
-	* {@link LRUCache.OptionsBase.dispose} (read-only)
-	*/
-	get dispose() {
-		return this.#dispose;
-	}
-	/**
-	* {@link LRUCache.OptionsBase.disposeAfter} (read-only)
-	*/
-	get disposeAfter() {
-		return this.#disposeAfter;
-	}
-	constructor(options) {
-		const { max = 0, ttl, ttlResolution = 1, ttlAutopurge, updateAgeOnGet, updateAgeOnHas, allowStale, dispose, disposeAfter, noDisposeOnSet, noUpdateTTL, maxSize = 0, maxEntrySize = 0, sizeCalculation, fetchMethod, noDeleteOnFetchRejection, noDeleteOnStaleGet, allowStaleOnFetchRejection, allowStaleOnFetchAbort, ignoreFetchAbort } = options;
-		if (max !== 0 && !isPosInt(max)) throw new TypeError("max option must be a nonnegative integer");
-		const UintArray = max ? getUintArray(max) : Array;
-		if (!UintArray) throw new Error("invalid max value: " + max);
-		this.#max = max;
-		this.#maxSize = maxSize;
-		this.maxEntrySize = maxEntrySize || this.#maxSize;
-		this.sizeCalculation = sizeCalculation;
-		if (this.sizeCalculation) {
-			if (!this.#maxSize && !this.maxEntrySize) throw new TypeError("cannot set sizeCalculation without setting maxSize or maxEntrySize");
-			if (typeof this.sizeCalculation !== "function") throw new TypeError("sizeCalculation set to non-function");
-		}
-		if (fetchMethod !== void 0 && typeof fetchMethod !== "function") throw new TypeError("fetchMethod must be a function if specified");
-		this.#fetchMethod = fetchMethod;
-		this.#hasFetchMethod = !!fetchMethod;
-		this.#keyMap = /* @__PURE__ */ new Map();
-		this.#keyList = new Array(max).fill(void 0);
-		this.#valList = new Array(max).fill(void 0);
-		this.#next = new UintArray(max);
-		this.#prev = new UintArray(max);
-		this.#head = 0;
-		this.#tail = 0;
-		this.#free = Stack.create(max);
-		this.#size = 0;
-		this.#calculatedSize = 0;
-		if (typeof dispose === "function") this.#dispose = dispose;
-		if (typeof disposeAfter === "function") {
-			this.#disposeAfter = disposeAfter;
-			this.#disposed = [];
-		} else {
-			this.#disposeAfter = void 0;
-			this.#disposed = void 0;
-		}
-		this.#hasDispose = !!this.#dispose;
-		this.#hasDisposeAfter = !!this.#disposeAfter;
-		this.noDisposeOnSet = !!noDisposeOnSet;
-		this.noUpdateTTL = !!noUpdateTTL;
-		this.noDeleteOnFetchRejection = !!noDeleteOnFetchRejection;
-		this.allowStaleOnFetchRejection = !!allowStaleOnFetchRejection;
-		this.allowStaleOnFetchAbort = !!allowStaleOnFetchAbort;
-		this.ignoreFetchAbort = !!ignoreFetchAbort;
-		if (this.maxEntrySize !== 0) {
-			if (this.#maxSize !== 0) {
-				if (!isPosInt(this.#maxSize)) throw new TypeError("maxSize must be a positive integer if specified");
-			}
-			if (!isPosInt(this.maxEntrySize)) throw new TypeError("maxEntrySize must be a positive integer if specified");
-			this.#initializeSizeTracking();
-		}
-		this.allowStale = !!allowStale;
-		this.noDeleteOnStaleGet = !!noDeleteOnStaleGet;
-		this.updateAgeOnGet = !!updateAgeOnGet;
-		this.updateAgeOnHas = !!updateAgeOnHas;
-		this.ttlResolution = isPosInt(ttlResolution) || ttlResolution === 0 ? ttlResolution : 1;
-		this.ttlAutopurge = !!ttlAutopurge;
-		this.ttl = ttl || 0;
-		if (this.ttl) {
-			if (!isPosInt(this.ttl)) throw new TypeError("ttl must be a positive integer if specified");
-			this.#initializeTTLTracking();
-		}
-		if (this.#max === 0 && this.ttl === 0 && this.#maxSize === 0) throw new TypeError("At least one of max, maxSize, or ttl is required");
-		if (!this.ttlAutopurge && !this.#max && !this.#maxSize) {
-			const code = "LRU_CACHE_UNBOUNDED";
-			if (shouldWarn(code)) {
-				warned.add(code);
-				emitWarning("TTL caching without ttlAutopurge, max, or maxSize can result in unbounded memory consumption.", "UnboundedCacheWarning", code, LRUCache);
-			}
-		}
-	}
-	/**
-	* Return the remaining TTL time for a given entry key
-	*/
-	getRemainingTTL(key) {
-		return this.#keyMap.has(key) ? Infinity : 0;
-	}
-	#initializeTTLTracking() {
-		const ttls = new ZeroArray(this.#max);
-		const starts = new ZeroArray(this.#max);
-		this.#ttls = ttls;
-		this.#starts = starts;
-		this.#setItemTTL = (index, ttl, start = perf.now()) => {
-			starts[index] = ttl !== 0 ? start : 0;
-			ttls[index] = ttl;
-			if (ttl !== 0 && this.ttlAutopurge) {
-				const t = setTimeout(() => {
-					if (this.#isStale(index)) this.delete(this.#keyList[index]);
-				}, ttl + 1);
-				/* c8 ignore start */
-				if (t.unref) t.unref();
-			}
-		};
-		this.#updateItemAge = (index) => {
-			starts[index] = ttls[index] !== 0 ? perf.now() : 0;
-		};
-		this.#statusTTL = (status, index) => {
-			if (ttls[index]) {
-				const ttl = ttls[index];
-				const start = starts[index];
-				status.ttl = ttl;
-				status.start = start;
-				status.now = cachedNow || getNow();
-				status.remainingTTL = ttl - (status.now - start);
-			}
-		};
-		let cachedNow = 0;
-		const getNow = () => {
-			const n = perf.now();
-			if (this.ttlResolution > 0) {
-				cachedNow = n;
-				const t = setTimeout(() => cachedNow = 0, this.ttlResolution);
-				/* c8 ignore start */
-				if (t.unref) t.unref();
-			}
-			return n;
-		};
-		this.getRemainingTTL = (key) => {
-			const index = this.#keyMap.get(key);
-			if (index === void 0) return 0;
-			const ttl = ttls[index];
-			const start = starts[index];
-			if (ttl === 0 || start === 0) return Infinity;
-			return ttl - ((cachedNow || getNow()) - start);
-		};
-		this.#isStale = (index) => {
-			return ttls[index] !== 0 && starts[index] !== 0 && (cachedNow || getNow()) - starts[index] > ttls[index];
-		};
-	}
-	#updateItemAge = () => {};
-	#statusTTL = () => {};
-	#setItemTTL = () => {};
-	/* c8 ignore stop */
-	#isStale = () => false;
-	#initializeSizeTracking() {
-		const sizes = new ZeroArray(this.#max);
-		this.#calculatedSize = 0;
-		this.#sizes = sizes;
-		this.#removeItemSize = (index) => {
-			this.#calculatedSize -= sizes[index];
-			sizes[index] = 0;
-		};
-		this.#requireSize = (k, v, size, sizeCalculation) => {
-			if (this.#isBackgroundFetch(v)) return 0;
-			if (!isPosInt(size)) if (sizeCalculation) {
-				if (typeof sizeCalculation !== "function") throw new TypeError("sizeCalculation must be a function");
-				size = sizeCalculation(v, k);
-				if (!isPosInt(size)) throw new TypeError("sizeCalculation return invalid (expect positive integer)");
-			} else throw new TypeError("invalid size value (must be positive integer). When maxSize or maxEntrySize is used, sizeCalculation or size must be set.");
-			return size;
-		};
-		this.#addItemSize = (index, size, status) => {
-			sizes[index] = size;
-			if (this.#maxSize) {
-				const maxSize = this.#maxSize - sizes[index];
-				while (this.#calculatedSize > maxSize) this.#evict(true);
-			}
-			this.#calculatedSize += sizes[index];
-			if (status) {
-				status.entrySize = size;
-				status.totalCalculatedSize = this.#calculatedSize;
-			}
-		};
-	}
-	#removeItemSize = (_i) => {};
-	#addItemSize = (_i, _s, _st) => {};
-	#requireSize = (_k, _v, size, sizeCalculation) => {
-		if (size || sizeCalculation) throw new TypeError("cannot set size without setting maxSize or maxEntrySize on cache");
-		return 0;
-	};
-	*#indexes({ allowStale = this.allowStale } = {}) {
-		if (this.#size) for (let i = this.#tail;;) {
-			if (!this.#isValidIndex(i)) break;
-			if (allowStale || !this.#isStale(i)) yield i;
-			if (i === this.#head) break;
-			else i = this.#prev[i];
-		}
-	}
-	*#rindexes({ allowStale = this.allowStale } = {}) {
-		if (this.#size) for (let i = this.#head;;) {
-			if (!this.#isValidIndex(i)) break;
-			if (allowStale || !this.#isStale(i)) yield i;
-			if (i === this.#tail) break;
-			else i = this.#next[i];
-		}
-	}
-	#isValidIndex(index) {
-		return index !== void 0 && this.#keyMap.get(this.#keyList[index]) === index;
-	}
-	/**
-	* Return a generator yielding `[key, value]` pairs,
-	* in order from most recently used to least recently used.
-	*/
-	*entries() {
-		for (const i of this.#indexes()) if (this.#valList[i] !== void 0 && this.#keyList[i] !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield [this.#keyList[i], this.#valList[i]];
-	}
-	/**
-	* Inverse order version of {@link LRUCache.entries}
-	*
-	* Return a generator yielding `[key, value]` pairs,
-	* in order from least recently used to most recently used.
-	*/
-	*rentries() {
-		for (const i of this.#rindexes()) if (this.#valList[i] !== void 0 && this.#keyList[i] !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield [this.#keyList[i], this.#valList[i]];
-	}
-	/**
-	* Return a generator yielding the keys in the cache,
-	* in order from most recently used to least recently used.
-	*/
-	*keys() {
-		for (const i of this.#indexes()) {
-			const k = this.#keyList[i];
-			if (k !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield k;
-		}
-	}
-	/**
-	* Inverse order version of {@link LRUCache.keys}
-	*
-	* Return a generator yielding the keys in the cache,
-	* in order from least recently used to most recently used.
-	*/
-	*rkeys() {
-		for (const i of this.#rindexes()) {
-			const k = this.#keyList[i];
-			if (k !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield k;
-		}
-	}
-	/**
-	* Return a generator yielding the values in the cache,
-	* in order from most recently used to least recently used.
-	*/
-	*values() {
-		for (const i of this.#indexes()) if (this.#valList[i] !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield this.#valList[i];
-	}
-	/**
-	* Inverse order version of {@link LRUCache.values}
-	*
-	* Return a generator yielding the values in the cache,
-	* in order from least recently used to most recently used.
-	*/
-	*rvalues() {
-		for (const i of this.#rindexes()) if (this.#valList[i] !== void 0 && !this.#isBackgroundFetch(this.#valList[i])) yield this.#valList[i];
-	}
-	/**
-	* Iterating over the cache itself yields the same results as
-	* {@link LRUCache.entries}
-	*/
-	[Symbol.iterator]() {
-		return this.entries();
-	}
-	/**
-	* Find a value for which the supplied fn method returns a truthy value,
-	* similar to Array.find().  fn is called as fn(value, key, cache).
-	*/
-	find(fn, getOptions = {}) {
-		for (const i of this.#indexes()) {
-			const v = this.#valList[i];
-			const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-			if (value === void 0) continue;
-			if (fn(value, this.#keyList[i], this)) return this.get(this.#keyList[i], getOptions);
-		}
-	}
-	/**
-	* Call the supplied function on each item in the cache, in order from
-	* most recently used to least recently used.  fn is called as
-	* fn(value, key, cache).  Does not update age or recenty of use.
-	* Does not iterate over stale values.
-	*/
-	forEach(fn, thisp = this) {
-		for (const i of this.#indexes()) {
-			const v = this.#valList[i];
-			const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-			if (value === void 0) continue;
-			fn.call(thisp, value, this.#keyList[i], this);
-		}
-	}
-	/**
-	* The same as {@link LRUCache.forEach} but items are iterated over in
-	* reverse order.  (ie, less recently used items are iterated over first.)
-	*/
-	rforEach(fn, thisp = this) {
-		for (const i of this.#rindexes()) {
-			const v = this.#valList[i];
-			const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-			if (value === void 0) continue;
-			fn.call(thisp, value, this.#keyList[i], this);
-		}
-	}
-	/**
-	* Delete any stale entries. Returns true if anything was removed,
-	* false otherwise.
-	*/
-	purgeStale() {
-		let deleted = false;
-		for (const i of this.#rindexes({ allowStale: true })) if (this.#isStale(i)) {
-			this.delete(this.#keyList[i]);
-			deleted = true;
-		}
-		return deleted;
-	}
-	/**
-	* Return an array of [key, {@link LRUCache.Entry}] tuples which can be
-	* passed to cache.load()
-	*/
-	dump() {
-		const arr = [];
-		for (const i of this.#indexes({ allowStale: true })) {
-			const key = this.#keyList[i];
-			const v = this.#valList[i];
-			const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-			if (value === void 0 || key === void 0) continue;
-			const entry = { value };
-			if (this.#ttls && this.#starts) {
-				entry.ttl = this.#ttls[i];
-				const age = perf.now() - this.#starts[i];
-				entry.start = Math.floor(Date.now() - age);
-			}
-			if (this.#sizes) entry.size = this.#sizes[i];
-			arr.unshift([key, entry]);
-		}
-		return arr;
-	}
-	/**
-	* Reset the cache and load in the items in entries in the order listed.
-	* Note that the shape of the resulting cache may be different if the
-	* same options are not used in both caches.
-	*/
-	load(arr) {
-		this.clear();
-		for (const [key, entry] of arr) {
-			if (entry.start) {
-				const age = Date.now() - entry.start;
-				entry.start = perf.now() - age;
-			}
-			this.set(key, entry.value, entry);
-		}
-	}
-	/**
-	* Add a value to the cache.
-	*
-	* Note: if `undefined` is specified as a value, this is an alias for
-	* {@link LRUCache#delete}
-	*/
-	set(k, v, setOptions = {}) {
-		if (v === void 0) {
-			this.delete(k);
-			return this;
-		}
-		const { ttl = this.ttl, start, noDisposeOnSet = this.noDisposeOnSet, sizeCalculation = this.sizeCalculation, status } = setOptions;
-		let { noUpdateTTL = this.noUpdateTTL } = setOptions;
-		const size = this.#requireSize(k, v, setOptions.size || 0, sizeCalculation);
-		if (this.maxEntrySize && size > this.maxEntrySize) {
-			if (status) {
-				status.set = "miss";
-				status.maxEntrySizeExceeded = true;
-			}
-			this.delete(k);
-			return this;
-		}
-		let index = this.#size === 0 ? void 0 : this.#keyMap.get(k);
-		if (index === void 0) {
-			index = this.#size === 0 ? this.#tail : this.#free.length !== 0 ? this.#free.pop() : this.#size === this.#max ? this.#evict(false) : this.#size;
-			this.#keyList[index] = k;
-			this.#valList[index] = v;
-			this.#keyMap.set(k, index);
-			this.#next[this.#tail] = index;
-			this.#prev[index] = this.#tail;
-			this.#tail = index;
-			this.#size++;
-			this.#addItemSize(index, size, status);
-			if (status) status.set = "add";
-			noUpdateTTL = false;
-		} else {
-			this.#moveToTail(index);
-			const oldVal = this.#valList[index];
-			if (v !== oldVal) {
-				if (this.#hasFetchMethod && this.#isBackgroundFetch(oldVal)) oldVal.__abortController.abort(/* @__PURE__ */ new Error("replaced"));
-				else if (!noDisposeOnSet) {
-					if (this.#hasDispose) this.#dispose?.(oldVal, k, "set");
-					if (this.#hasDisposeAfter) this.#disposed?.push([
-						oldVal,
-						k,
-						"set"
-					]);
-				}
-				this.#removeItemSize(index);
-				this.#addItemSize(index, size, status);
-				this.#valList[index] = v;
-				if (status) {
-					status.set = "replace";
-					const oldValue = oldVal && this.#isBackgroundFetch(oldVal) ? oldVal.__staleWhileFetching : oldVal;
-					if (oldValue !== void 0) status.oldValue = oldValue;
-				}
-			} else if (status) status.set = "update";
-		}
-		if (ttl !== 0 && !this.#ttls) this.#initializeTTLTracking();
-		if (this.#ttls) {
-			if (!noUpdateTTL) this.#setItemTTL(index, ttl, start);
-			if (status) this.#statusTTL(status, index);
-		}
-		if (!noDisposeOnSet && this.#hasDisposeAfter && this.#disposed) {
-			const dt = this.#disposed;
-			let task;
-			while (task = dt?.shift()) this.#disposeAfter?.(...task);
-		}
-		return this;
-	}
-	/**
-	* Evict the least recently used item, returning its value or
-	* `undefined` if cache is empty.
-	*/
-	pop() {
-		try {
-			while (this.#size) {
-				const val = this.#valList[this.#head];
-				this.#evict(true);
-				if (this.#isBackgroundFetch(val)) {
-					if (val.__staleWhileFetching) return val.__staleWhileFetching;
-				} else if (val !== void 0) return val;
-			}
-		} finally {
-			if (this.#hasDisposeAfter && this.#disposed) {
-				const dt = this.#disposed;
-				let task;
-				while (task = dt?.shift()) this.#disposeAfter?.(...task);
-			}
-		}
-	}
-	#evict(free) {
-		const head = this.#head;
-		const k = this.#keyList[head];
-		const v = this.#valList[head];
-		if (this.#hasFetchMethod && this.#isBackgroundFetch(v)) v.__abortController.abort(/* @__PURE__ */ new Error("evicted"));
-		else if (this.#hasDispose || this.#hasDisposeAfter) {
-			if (this.#hasDispose) this.#dispose?.(v, k, "evict");
-			if (this.#hasDisposeAfter) this.#disposed?.push([
-				v,
-				k,
-				"evict"
-			]);
-		}
-		this.#removeItemSize(head);
-		if (free) {
-			this.#keyList[head] = void 0;
-			this.#valList[head] = void 0;
-			this.#free.push(head);
-		}
-		if (this.#size === 1) {
-			this.#head = this.#tail = 0;
-			this.#free.length = 0;
-		} else this.#head = this.#next[head];
-		this.#keyMap.delete(k);
-		this.#size--;
-		return head;
-	}
-	/**
-	* Check if a key is in the cache, without updating the recency of use.
-	* Will return false if the item is stale, even though it is technically
-	* in the cache.
-	*
-	* Will not update item age unless
-	* {@link LRUCache.OptionsBase.updateAgeOnHas} is set.
-	*/
-	has(k, hasOptions = {}) {
-		const { updateAgeOnHas = this.updateAgeOnHas, status } = hasOptions;
-		const index = this.#keyMap.get(k);
-		if (index !== void 0) {
-			const v = this.#valList[index];
-			if (this.#isBackgroundFetch(v) && v.__staleWhileFetching === void 0) return false;
-			if (!this.#isStale(index)) {
-				if (updateAgeOnHas) this.#updateItemAge(index);
-				if (status) {
-					status.has = "hit";
-					this.#statusTTL(status, index);
-				}
-				return true;
-			} else if (status) {
-				status.has = "stale";
-				this.#statusTTL(status, index);
-			}
-		} else if (status) status.has = "miss";
-		return false;
-	}
-	/**
-	* Like {@link LRUCache#get} but doesn't update recency or delete stale
-	* items.
-	*
-	* Returns `undefined` if the item is stale, unless
-	* {@link LRUCache.OptionsBase.allowStale} is set.
-	*/
-	peek(k, peekOptions = {}) {
-		const { allowStale = this.allowStale } = peekOptions;
-		const index = this.#keyMap.get(k);
-		if (index !== void 0 && (allowStale || !this.#isStale(index))) {
-			const v = this.#valList[index];
-			return this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-		}
-	}
-	#backgroundFetch(k, index, options, context) {
-		const v = index === void 0 ? void 0 : this.#valList[index];
-		if (this.#isBackgroundFetch(v)) return v;
-		const ac = new AC();
-		const { signal } = options;
-		signal?.addEventListener("abort", () => ac.abort(signal.reason), { signal: ac.signal });
-		const fetchOpts = {
-			signal: ac.signal,
-			options,
-			context
-		};
-		const cb = (v, updateCache = false) => {
-			const { aborted } = ac.signal;
-			const ignoreAbort = options.ignoreFetchAbort && v !== void 0;
-			if (options.status) if (aborted && !updateCache) {
-				options.status.fetchAborted = true;
-				options.status.fetchError = ac.signal.reason;
-				if (ignoreAbort) options.status.fetchAbortIgnored = true;
-			} else options.status.fetchResolved = true;
-			if (aborted && !ignoreAbort && !updateCache) return fetchFail(ac.signal.reason);
-			const bf = p;
-			if (this.#valList[index] === p) if (v === void 0) if (bf.__staleWhileFetching) this.#valList[index] = bf.__staleWhileFetching;
-			else this.delete(k);
-			else {
-				if (options.status) options.status.fetchUpdated = true;
-				this.set(k, v, fetchOpts.options);
-			}
-			return v;
-		};
-		const eb = (er) => {
-			if (options.status) {
-				options.status.fetchRejected = true;
-				options.status.fetchError = er;
-			}
-			return fetchFail(er);
-		};
-		const fetchFail = (er) => {
-			const { aborted } = ac.signal;
-			const allowStaleAborted = aborted && options.allowStaleOnFetchAbort;
-			const allowStale = allowStaleAborted || options.allowStaleOnFetchRejection;
-			const noDelete = allowStale || options.noDeleteOnFetchRejection;
-			const bf = p;
-			if (this.#valList[index] === p) {
-				if (!noDelete || bf.__staleWhileFetching === void 0) this.delete(k);
-				else if (!allowStaleAborted) this.#valList[index] = bf.__staleWhileFetching;
-			}
-			if (allowStale) {
-				if (options.status && bf.__staleWhileFetching !== void 0) options.status.returnedStale = true;
-				return bf.__staleWhileFetching;
-			} else if (bf.__returned === bf) throw er;
-		};
-		const pcall = (res, rej) => {
-			const fmp = this.#fetchMethod?.(k, v, fetchOpts);
-			if (fmp && fmp instanceof Promise) fmp.then((v) => res(v), rej);
-			ac.signal.addEventListener("abort", () => {
-				if (!options.ignoreFetchAbort || options.allowStaleOnFetchAbort) {
-					res();
-					if (options.allowStaleOnFetchAbort) res = (v) => cb(v, true);
-				}
-			});
-		};
-		if (options.status) options.status.fetchDispatched = true;
-		const p = new Promise(pcall).then(cb, eb);
-		const bf = Object.assign(p, {
-			__abortController: ac,
-			__staleWhileFetching: v,
-			__returned: void 0
-		});
-		if (index === void 0) {
-			this.set(k, bf, {
-				...fetchOpts.options,
-				status: void 0
-			});
-			index = this.#keyMap.get(k);
-		} else this.#valList[index] = bf;
-		return bf;
-	}
-	#isBackgroundFetch(p) {
-		if (!this.#hasFetchMethod) return false;
-		const b = p;
-		return !!b && b instanceof Promise && b.hasOwnProperty("__staleWhileFetching") && b.__abortController instanceof AC;
-	}
-	async fetch(k, fetchOptions = {}) {
-		const { allowStale = this.allowStale, updateAgeOnGet = this.updateAgeOnGet, noDeleteOnStaleGet = this.noDeleteOnStaleGet, ttl = this.ttl, noDisposeOnSet = this.noDisposeOnSet, size = 0, sizeCalculation = this.sizeCalculation, noUpdateTTL = this.noUpdateTTL, noDeleteOnFetchRejection = this.noDeleteOnFetchRejection, allowStaleOnFetchRejection = this.allowStaleOnFetchRejection, ignoreFetchAbort = this.ignoreFetchAbort, allowStaleOnFetchAbort = this.allowStaleOnFetchAbort, context, forceRefresh = false, status, signal } = fetchOptions;
-		if (!this.#hasFetchMethod) {
-			if (status) status.fetch = "get";
-			return this.get(k, {
-				allowStale,
-				updateAgeOnGet,
-				noDeleteOnStaleGet,
-				status
-			});
-		}
-		const options = {
-			allowStale,
-			updateAgeOnGet,
-			noDeleteOnStaleGet,
-			ttl,
-			noDisposeOnSet,
-			size,
-			sizeCalculation,
-			noUpdateTTL,
-			noDeleteOnFetchRejection,
-			allowStaleOnFetchRejection,
-			allowStaleOnFetchAbort,
-			ignoreFetchAbort,
-			status,
-			signal
-		};
-		let index = this.#keyMap.get(k);
-		if (index === void 0) {
-			if (status) status.fetch = "miss";
-			const p = this.#backgroundFetch(k, index, options, context);
-			return p.__returned = p;
-		} else {
-			const v = this.#valList[index];
-			if (this.#isBackgroundFetch(v)) {
-				const stale = allowStale && v.__staleWhileFetching !== void 0;
-				if (status) {
-					status.fetch = "inflight";
-					if (stale) status.returnedStale = true;
-				}
-				return stale ? v.__staleWhileFetching : v.__returned = v;
-			}
-			const isStale = this.#isStale(index);
-			if (!forceRefresh && !isStale) {
-				if (status) status.fetch = "hit";
-				this.#moveToTail(index);
-				if (updateAgeOnGet) this.#updateItemAge(index);
-				if (status) this.#statusTTL(status, index);
-				return v;
-			}
-			const p = this.#backgroundFetch(k, index, options, context);
-			const staleVal = p.__staleWhileFetching !== void 0 && allowStale;
-			if (status) {
-				status.fetch = isStale ? "stale" : "refresh";
-				if (staleVal && isStale) status.returnedStale = true;
-			}
-			return staleVal ? p.__staleWhileFetching : p.__returned = p;
-		}
-	}
-	/**
-	* Return a value from the cache. Will update the recency of the cache
-	* entry found.
-	*
-	* If the key is not found, get() will return `undefined`.
-	*/
-	get(k, getOptions = {}) {
-		const { allowStale = this.allowStale, updateAgeOnGet = this.updateAgeOnGet, noDeleteOnStaleGet = this.noDeleteOnStaleGet, status } = getOptions;
-		const index = this.#keyMap.get(k);
-		if (index !== void 0) {
-			const value = this.#valList[index];
-			const fetching = this.#isBackgroundFetch(value);
-			if (status) this.#statusTTL(status, index);
-			if (this.#isStale(index)) {
-				if (status) status.get = "stale";
-				if (!fetching) {
-					if (!noDeleteOnStaleGet) this.delete(k);
-					if (status && allowStale) status.returnedStale = true;
-					return allowStale ? value : void 0;
-				} else {
-					if (status && allowStale && value.__staleWhileFetching !== void 0) status.returnedStale = true;
-					return allowStale ? value.__staleWhileFetching : void 0;
-				}
-			} else {
-				if (status) status.get = "hit";
-				if (fetching) return value.__staleWhileFetching;
-				this.#moveToTail(index);
-				if (updateAgeOnGet) this.#updateItemAge(index);
-				return value;
-			}
-		} else if (status) status.get = "miss";
-	}
-	#connect(p, n) {
-		this.#prev[n] = p;
-		this.#next[p] = n;
-	}
-	#moveToTail(index) {
-		if (index !== this.#tail) {
-			if (index === this.#head) this.#head = this.#next[index];
-			else this.#connect(this.#prev[index], this.#next[index]);
-			this.#connect(this.#tail, index);
-			this.#tail = index;
-		}
-	}
-	/**
-	* Deletes a key out of the cache.
-	* Returns true if the key was deleted, false otherwise.
-	*/
-	delete(k) {
-		let deleted = false;
-		if (this.#size !== 0) {
-			const index = this.#keyMap.get(k);
-			if (index !== void 0) {
-				deleted = true;
-				if (this.#size === 1) this.clear();
-				else {
-					this.#removeItemSize(index);
-					const v = this.#valList[index];
-					if (this.#isBackgroundFetch(v)) v.__abortController.abort(/* @__PURE__ */ new Error("deleted"));
-					else if (this.#hasDispose || this.#hasDisposeAfter) {
-						if (this.#hasDispose) this.#dispose?.(v, k, "delete");
-						if (this.#hasDisposeAfter) this.#disposed?.push([
-							v,
-							k,
-							"delete"
-						]);
-					}
-					this.#keyMap.delete(k);
-					this.#keyList[index] = void 0;
-					this.#valList[index] = void 0;
-					if (index === this.#tail) this.#tail = this.#prev[index];
-					else if (index === this.#head) this.#head = this.#next[index];
-					else {
-						this.#next[this.#prev[index]] = this.#next[index];
-						this.#prev[this.#next[index]] = this.#prev[index];
-					}
-					this.#size--;
-					this.#free.push(index);
-				}
-			}
-		}
-		if (this.#hasDisposeAfter && this.#disposed?.length) {
-			const dt = this.#disposed;
-			let task;
-			while (task = dt?.shift()) this.#disposeAfter?.(...task);
-		}
-		return deleted;
-	}
-	/**
-	* Clear the cache entirely, throwing away all values.
-	*/
-	clear() {
-		for (const index of this.#rindexes({ allowStale: true })) {
-			const v = this.#valList[index];
-			if (this.#isBackgroundFetch(v)) v.__abortController.abort(/* @__PURE__ */ new Error("deleted"));
-			else {
-				const k = this.#keyList[index];
-				if (this.#hasDispose) this.#dispose?.(v, k, "delete");
-				if (this.#hasDisposeAfter) this.#disposed?.push([
-					v,
-					k,
-					"delete"
-				]);
-			}
-		}
-		this.#keyMap.clear();
-		this.#valList.fill(void 0);
-		this.#keyList.fill(void 0);
-		if (this.#ttls && this.#starts) {
-			this.#ttls.fill(0);
-			this.#starts.fill(0);
-		}
-		if (this.#sizes) this.#sizes.fill(0);
-		this.#head = 0;
-		this.#tail = 0;
-		this.#free.length = 0;
-		this.#calculatedSize = 0;
-		this.#size = 0;
-		if (this.#hasDisposeAfter && this.#disposed) {
-			const dt = this.#disposed;
-			let task;
-			while (task = dt?.shift()) this.#disposeAfter?.(...task);
-		}
-	}
-};
-//#endregion
 //#region ../node_modules/pino-std-serializers/lib/err-helpers.js
 var require_err_helpers = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	const isErrorLike = (err) => {
@@ -104300,6 +104578,7 @@ var require_fastify = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 //#region ../node_modules/rotating-file-stream/dist/esm/index.js
 var import_fastify = /* @__PURE__ */ __toESM(require_fastify(), 1);
 var import_pino = /* @__PURE__ */ __toESM(require_pino(), 1);
+var import_dist$1 = require_dist$4();
 async function exists(filename) {
 	return new Promise((resolve) => access(filename, constants.F_OK, (error) => resolve(!error)));
 }
@@ -105248,7 +105527,6 @@ const ENV = {
 			return envObj;
 		}
 		if (cache.has(key)) return cache.get(key);
-		fastify.log.info(`[get] 从文件中读取: ${key}`);
 		let value = this._readEnvFile()[key] || _value;
 		if (isObject && typeof value !== "object") try {
 			value = JSON.parse(value);
@@ -105657,7 +105935,7 @@ var AliDrive = class {
 			await this.refreshAccessToken();
 			Object.assign(headers, { Authorization: this.user.auth });
 		}
-		const resp = await req$1.post(`${apiUrl}/${url}`, data, { headers }).catch((err) => {
+		const resp = await reqs.post(`${apiUrl}/${url}`, data, { headers }).catch((err) => {
 			console.error(err);
 			return err.response || {
 				status: 500,
@@ -105682,7 +105960,7 @@ var AliDrive = class {
 		let resp = "";
 		if (url.startsWith("http")) {
 			Object.assign(headers, { Authorization: "Bearer " + this.oauth.access_token });
-			resp = await req$1.post(`${url}`, data, { headers }).catch((err) => {
+			resp = await reqs.post(`${url}`, data, { headers }).catch((err) => {
 				console.error(err);
 				return err.response || {
 					status: 500,
@@ -105691,7 +105969,7 @@ var AliDrive = class {
 			});
 		} else {
 			Object.assign(headers, { Authorization: this.user.auth });
-			resp = await req$1.post(`${apiUrl}/${url}`, data, { headers }).catch((err) => {
+			resp = await reqs.post(`${apiUrl}/${url}`, data, { headers }).catch((err) => {
 				console.error(err);
 				return err.response || {
 					status: 500,
@@ -105715,7 +105993,7 @@ var AliDrive = class {
 			"width": 300,
 			"height": 300
 		});
-		let resp = await req$1.post("https://aliyundrive-oauth.messense.me/oauth/authorize/qrcode", data, { headers: { "Content-Type": "application/json" } });
+		let resp = await reqs.post("https://aliyundrive-oauth.messense.me/oauth/authorize/qrcode", data, { headers: { "Content-Type": "application/json" } });
 		if (resp.data.sid) this.sid = resp.data.sid;
 	}
 	async getDriveFlag() {
@@ -105731,10 +106009,10 @@ var AliDrive = class {
 			"sid": this.sid
 		};
 		let headers = { "authorization": this.user.auth };
-		return (await req$1.post("https://open.aliyundrive.com/oauth/users/qrcode/authorize?sid=" + this.sid, body, { headers })).data.result;
+		return (await reqs.post("https://open.aliyundrive.com/oauth/users/qrcode/authorize?sid=" + this.sid, body, { headers })).data.result;
 	}
 	async getDriveCode() {
-		let status = await req$1.get(`https://openapi.aliyundrive.com/oauth/qrcode/${this.sid}/status`);
+		let status = await reqs.get(`https://openapi.aliyundrive.com/oauth/qrcode/${this.sid}/status`);
 		if (status.data.status === "LoginSuccess") return status.data.authCode;
 	}
 	async driveAuth() {
@@ -105748,7 +106026,7 @@ var AliDrive = class {
 					code: await this.getDriveCode(),
 					grant_type: "authorization_code"
 				};
-				let response = await req$1.post("https://aliyundrive-oauth.messense.me/oauth/access_token", data);
+				let response = await reqs.post("https://aliyundrive-oauth.messense.me/oauth/access_token", data);
 				if (response.status === 200) {
 					this.oauth = response.data;
 					const info = JSON.parse(CryptoJS.enc.Base64.parse(this.oauth.access_token.split(".")[1]).toString(CryptoJS.enc.Utf8));
@@ -105762,7 +106040,7 @@ var AliDrive = class {
 	}
 	async refreshAccessToken() {
 		if (!this.user.user_id || this.user.expire_time - (0, import_dayjs_min.default)().unix() < 120) {
-			let loginResp = await req$1.post("https://auth.aliyundrive.com/v2/account/token", {
+			let loginResp = await reqs.post("https://auth.aliyundrive.com/v2/account/token", {
 				refresh_token: this.user.refresh_token || this.token,
 				grant_type: "refresh_token"
 			}, { headers: this.baseHeaders }).catch((err) => {
@@ -105870,8 +106148,10 @@ var AliDrive = class {
 			const subDir = [];
 			for (const item of items) if (item.type === "folder") subDir.push(item);
 			else if (item.type === "file" && item.category === "video") {
+				let text = /[#|'"\[\]&<>]/g;
 				if (item.size < 1024 * 1024 * 5) continue;
 				item.name = item.name.replace(/玩偶哥.*【神秘的哥哥们】/g, "");
+				item.name = text.test(item.name) ? item.name.replace(text, "") : item.name;
 				videos.push(item);
 			} else if (item.type === "file" && subtitleExts.some((x) => item.file_extension.endsWith(x))) subtitles.push(item);
 			for (const dir of subDir) {
@@ -105950,7 +106230,7 @@ var AliDrive = class {
 			"referer": "https://www.alipan.com/"
 		};
 		Object.assign(headers, { Authorization: this.user.auth });
-		let resp = await req$1.post(url, { param }, { headers });
+		let resp = await reqs.post(url, { param }, { headers });
 		if (resp.status === 200) return resp.data;
 		else {
 			console.log("获取用户信息失败");
@@ -113873,285 +114153,6 @@ var CloudDrive = class {
 };
 const Cloud$1 = new CloudDrive();
 //#endregion
-//#region ../libs_drpy/crypto-util.js
-/**
-* 加密解密工具库
-* 提供Base64、MD5、RC4等加密解密功能
-*/
-/**
-* 浏览器兼容的Base64编解码实现
-* @returns {Object} 包含atob和btoa方法的对象
-*/
-function window_b64() {
-	let b64map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	let base64DecodeChars = new Array(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1);
-	/**
-	* Base64编码
-	* @param {string} str 待编码字符串
-	* @returns {string} Base64编码结果
-	*/
-	function btoa(str) {
-		var out, i, len;
-		var c1, c2, c3;
-		len = str.length;
-		i = 0;
-		out = "";
-		while (i < len) {
-			c1 = str.charCodeAt(i++) & 255;
-			if (i == len) {
-				out += b64map.charAt(c1 >> 2);
-				out += b64map.charAt((c1 & 3) << 4);
-				out += "==";
-				break;
-			}
-			c2 = str.charCodeAt(i++);
-			if (i == len) {
-				out += b64map.charAt(c1 >> 2);
-				out += b64map.charAt((c1 & 3) << 4 | (c2 & 240) >> 4);
-				out += b64map.charAt((c2 & 15) << 2);
-				out += "=";
-				break;
-			}
-			c3 = str.charCodeAt(i++);
-			out += b64map.charAt(c1 >> 2);
-			out += b64map.charAt((c1 & 3) << 4 | (c2 & 240) >> 4);
-			out += b64map.charAt((c2 & 15) << 2 | (c3 & 192) >> 6);
-			out += b64map.charAt(c3 & 63);
-		}
-		return out;
-	}
-	/**
-	* Base64解码
-	* @param {string} str Base64编码字符串
-	* @returns {string} 解码结果
-	*/
-	function atob(str) {
-		var c1, c2, c3, c4;
-		var i, len = str.length, out;
-		i = 0;
-		out = "";
-		while (i < len) {
-			do
-				c1 = base64DecodeChars[str.charCodeAt(i++) & 255];
-			while (i < len && c1 == -1);
-			if (c1 == -1) break;
-			do
-				c2 = base64DecodeChars[str.charCodeAt(i++) & 255];
-			while (i < len && c2 == -1);
-			if (c2 == -1) break;
-			out += String.fromCharCode(c1 << 2 | (c2 & 48) >> 4);
-			do {
-				c3 = str.charCodeAt(i++) & 255;
-				if (c3 == 61) return out;
-				c3 = base64DecodeChars[c3];
-			} while (i < len && c3 == -1);
-			if (c3 == -1) break;
-			out += String.fromCharCode((c2 & 15) << 4 | (c3 & 60) >> 2);
-			do {
-				c4 = str.charCodeAt(i++) & 255;
-				if (c4 == 61) return out;
-				c4 = base64DecodeChars[c4];
-			} while (i < len && c4 == -1);
-			if (c4 == -1) break;
-			out += String.fromCharCode((c3 & 3) << 6 | c4);
-		}
-		return out;
-	}
-	return {
-		atob,
-		btoa
-	};
-}
-const { atob: atob$2, btoa: btoa$2 } = window_b64();
-/**
-* Base64编码（使用CryptoJS）
-* @param {string} text 待编码文本
-* @returns {string} Base64编码结果
-*/
-function base64Encode$1(text) {
-	return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text));
-}
-/**
-* Base64解码（使用CryptoJS）
-* @param {string} text Base64编码文本
-* @returns {string} 解码结果
-*/
-function base64Decode$2(text) {
-	return CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(text));
-}
-/**
-* MD5哈希
-* @param {string} text 待哈希文本
-* @returns {string} MD5哈希值
-*/
-function md5$1(text) {
-	return CryptoJS.MD5(text).toString();
-}
-/**
-* RC4加密
-* @param {string} word 待加密内容
-* @param {string} key 加密密钥
-* @returns {string} 加密结果
-*/
-function rc4Encrypt(word, key) {
-	return CryptoJS.RC4.encrypt(word, CryptoJS.enc.Utf8.parse(key)).toString();
-}
-/**
-* RC4解密
-* @param {string} word 待解密内容
-* @param {string} key 解密密钥
-* @returns {string} 解密结果
-*/
-function rc4Decrypt(word, key) {
-	const ciphertext = CryptoJS.enc.Hex.parse(word);
-	const key_data = CryptoJS.enc.Utf8.parse(key);
-	return CryptoJS.RC4.decrypt({ ciphertext }, key_data, {
-		mode: CryptoJS.mode.ECB,
-		padding: CryptoJS.pad.Pkcs7
-	}).toString(CryptoJS.enc.Utf8);
-}
-/**
-* RC4解码（自定义实现）
-* @param {string} data 待解码数据
-* @param {string} key 密钥
-* @param {number} t 类型标识
-* @returns {string} 解码结果
-*/
-function rc4_decode(data, key, t) {
-	let pwd = key || "ffsirllq";
-	let cipher = "";
-	key = [];
-	let box = [];
-	let pwd_length = pwd.length;
-	if (t === 1) data = atob$2(data);
-	else data = encodeURIComponent(data);
-	let data_length = data.length;
-	for (let i = 0; i < 256; i++) {
-		key[i] = pwd[i % pwd_length].charCodeAt();
-		box[i] = i;
-	}
-	for (let j = 0, i = 0; i < 256; i++) {
-		j = (j + box[i] + key[i]) % 256;
-		let tmp = box[i];
-		box[i] = box[j];
-		box[j] = tmp;
-	}
-	for (let a = 0, j = 0, i = 0; i < data_length; i++) {
-		a = (a + 1) % 256;
-		j = (j + box[a]) % 256;
-		let tmp = box[a];
-		box[a] = box[j];
-		box[j] = tmp;
-		let k = box[(box[a] + box[j]) % 256];
-		cipher += String.fromCharCode(data[i].charCodeAt() ^ k);
-	}
-	if (t === 1) return decodeURIComponent(cipher);
-	else return btoa$2(cipher);
-}
-/**
-* 十六进制编解码工具
-*/
-const hex = {
-	decode: function(val) {
-		return Buffer.from(val, "hex").toString("utf-8");
-	},
-	encode: function(val) {
-		return Buffer.from(val, "utf-8").toString("hex");
-	}
-};
-/**
-* 解析编码格式
-* @param {string} value 值
-* @param {string} encoding 编码格式
-* @returns {Object} CryptoJS编码对象
-*/
-const parseEncode = function(value, encoding) {
-	switch (encoding) {
-		case "base64": return CryptoJS.enc.Base64.parse(value);
-		case "hex": return CryptoJS.enc.Hex.parse(value);
-		case "latin1": return CryptoJS.enc.Latin1.parse(value);
-		case "utf8": return CryptoJS.enc.Utf8.parse(value);
-		default: return CryptoJS.enc.Utf8.parse(value);
-	}
-};
-/**
-* 格式化编码输出
-* @param {Object} value CryptoJS对象
-* @param {string} encoding 编码格式
-* @returns {string} 格式化结果
-*/
-const formatEncode = function(value, encoding) {
-	switch (encoding.toLowerCase()) {
-		case "base64": return value.toString();
-		case "hex": return value.ciphertext.toString();
-	}
-};
-/**
-* 格式化解码输出
-* @param {Object} value CryptoJS对象
-* @param {string} encoding 编码格式
-* @returns {string} 格式化结果
-*/
-const formatDecode = function(value, encoding) {
-	switch (encoding.toLowerCase()) {
-		case "utf8": return value.toString(CryptoJS.enc.Utf8);
-		case "base64": return value.toString(CryptoJS.enc.Base64);
-		case "hex": return value.toString(CryptoJS.enc.Hex);
-		default: return value.toString(CryptoJS.enc.Utf8);
-	}
-};
-/**
-* 获取加密模式
-* @param {string} mode 模式名称
-* @returns {Object} CryptoJS模式对象
-*/
-const getMode = function(mode) {
-	switch (mode.toLowerCase()) {
-		case "cbc": return CryptoJS.mode.CBC;
-		case "cfb": return CryptoJS.mode.CFB;
-		case "ofb": return CryptoJS.mode.OFB;
-		case "ctr": return CryptoJS.mode.CTR;
-		case "ecb": return CryptoJS.mode.ECB;
-		default: return CryptoJS.mode.CBC;
-	}
-};
-/**
-* 获取填充方式
-* @param {string} padding 填充方式名称
-* @returns {Object} CryptoJS填充对象
-*/
-const getPad = function(padding) {
-	switch (padding.toLowerCase()) {
-		case "zeropadding": return CryptoJS.pad.ZeroPadding;
-		case "pkcs5padding":
-		case "pkcs7padding": return CryptoJS.pad.Pkcs7;
-		case "ansix923": return CryptoJS.pad.AnsiX923;
-		case "iso10126": return CryptoJS.pad.Iso10126;
-		case "iso97971": return CryptoJS.pad.Iso97971;
-		case "nopadding": return CryptoJS.pad.NoPadding;
-		default: return CryptoJS.pad.ZeroPadding;
-	}
-};
-/**
-* RC4加密解密工具
-*/
-const rc4 = {
-	encode: function(val, key, encoding = "utf8", keyEncoding = "utf8", outputEncode = "base64") {
-		if (!["base64", "hex"].includes(outputEncode.toLowerCase())) return "";
-		if (!key || !val) return "";
-		const plaintext = parseEncode(val, encoding);
-		const v = parseEncode(key, keyEncoding);
-		return formatEncode(CryptoJS.RC4.encrypt(plaintext, v), outputEncode);
-	},
-	decode: function(val, key, encoding = "utf8", keyEncoding = "utf8", outputEncode = "base64") {
-		if (!["base64", "hex"].includes(encoding.toLowerCase())) return "";
-		if (!key || !val) return "";
-		const plaintext = parseEncode(val, encoding);
-		const v = parseEncode(key, keyEncoding);
-		return formatDecode(CryptoJS.RC4.toString(plaintext, v), outputEncode);
-	}
-};
-//#endregion
 //#region ../utils/pan/pan123.js
 /**
 * 123网盘API操作类
@@ -115320,11 +115321,6 @@ const Quark$1 = new QuarkHandler();
 //#endregion
 //#region ../utils/pan/uc.js
 /**
-* UC网盘处理器模块
-* 提供UC网盘分享链接解析、文件下载、转存等功能
-* @module uc-handler
-*/
-/**
 * UC网盘处理器类
 * 负责处理UC网盘的各种操作，包括分享链接解析、文件下载、转存等
 */
@@ -115405,6 +115401,17 @@ var UCHandler = class {
 	* @param {Object} cfg - 配置对象
 	*/
 	async initUC(db, cfg) {
+		if (this.token) {
+			let exp = JSON.parse(import_crypto_js.default.enc.Base64.parse(this.token.split(".")[1]).toString(import_crypto_js.default.enc.Utf8));
+			let now = Math.floor(Date.now() / 1e3);
+			if (exp.exp < now) {
+				console.log("登录状态已过期,尝试刷新Token");
+				await this.refreshUcToken();
+			} else {
+				console.log("登录成功，继续使用,可使用时间截止到：" + (/* @__PURE__ */ new Date(exp.exp * 1e3)).toLocaleString());
+				console.log("UC TV token获取成功：" + this.token);
+			}
+		}
 		if (this.cookie) console.log("cookie 获取成功");
 		else console.log("cookie 获取失败");
 	}
@@ -115505,13 +115512,13 @@ var UCHandler = class {
 			Cookie: this.cookie || ""
 		});
 		method = method || "post";
-		const resp = method === "get" ? await req$1.get(`${this.apiUrl}/${url}`, { headers }).catch((err) => {
+		const resp = method === "get" ? await reqs.get(`${this.apiUrl}/${url}`, { headers }).catch((err) => {
 			console.error(err);
 			return err.response || {
 				status: 500,
 				data: {}
 			};
-		}) : await req$1.post(`${this.apiUrl}/${url}`, data, { headers }).catch((err) => {
+		}) : await reqs.post(`${this.apiUrl}/${url}`, data, { headers }).catch((err) => {
 			console.error(err);
 			return err.response || {
 				status: 500,
@@ -115616,6 +115623,7 @@ var UCHandler = class {
 			else if (item.file === true && item.obj_category === "video") {
 				if (item.size < 1024 * 1024 * 5) continue;
 				item.stoken = this.shareTokenCache[shareData.shareId].stoken;
+				item.file_name = text.test(item.file_name) ? item.file_name.replace(text, "") : item.file_name;
 				videos.push(item);
 			} else if (item.type === "file" && this.subtitleExts.some((x) => item.file_name.endsWith(x))) subtitles.push(item);
 			if (page < Math.ceil(listData.metadata._total / prePage)) {
@@ -115728,7 +115736,48 @@ var UCHandler = class {
 		const data = method + "&" + pathname + "&" + timestamp + "&" + key;
 		return import_crypto_js.default.SHA256(data).toString();
 	}
+	async refreshUcToken() {
+		const timestamp = Math.floor(Date.now() / 1e3).toString() + "000";
+		const deviceID = this.Addition.DeviceID || this.generateDeviceID(timestamp);
+		const reqId = this.generateReqId(deviceID, timestamp);
+		let data = JSON.stringify({
+			"req_id": reqId,
+			"app_ver": this.conf.appVer,
+			"device_id": deviceID,
+			"device_brand": "OPPO",
+			"platform": "tv",
+			"device_name": "PCRT00",
+			"device_model": "PCRT00",
+			"build_device": "aosp",
+			"build_product": "PCRT00",
+			"device_gpu": "Adreno%20(TM)%20640",
+			"activity_rect": "%7B%7D",
+			"channel": this.conf.channel,
+			"refresh_token": this.token
+		});
+		let config = {
+			method: "POST",
+			url: "http://api.extscreen.com/ucdrive/token",
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Linux; U; Android 7.1.2; zh-cn; PCRT00 Build/N2G47O) AppleWebKit/533.1 (KHTML, like Gecko) Mobile Safari/533.1",
+				"Connection": "Keep-Alive",
+				"Accept-Encoding": "gzip",
+				"Content-Type": "application/json",
+				"Cookie": "sl-session=VIaxTAKF8mdJBhU2uda0zA=="
+			},
+			data
+		};
+		let req = await axios.request(config);
+		if (req.status === 200) {
+			console.log("刷新token成功");
+			const token = req.data.data.access_token;
+			let exp = JSON.parse(import_crypto_js.default.enc.Base64.parse(token.split(".")[1]).toString(import_crypto_js.default.enc.Utf8));
+			console.log("登录成功，继续使用,可使用时间截止到：" + (/* @__PURE__ */ new Date(exp.exp * 1e3)).toLocaleString());
+			ENV.set("uc_token_cookie", token);
+		}
+	}
 	async getDownload(shareId, stoken, fileId, fileToken, clean) {
+		await this.initUC();
 		if (!this.saveFileIdCaches[fileId]) {
 			const saveFileId = await this.save(shareId, stoken, fileId, fileToken, clean);
 			if (!saveFileId) return null;
@@ -115785,38 +115834,8 @@ var UCHandler = class {
 				return video;
 			}
 			if (req.data.status === -1 || req.data.errno === 10001) {
-				let data = JSON.stringify({
-					"req_id": reqId,
-					"app_ver": this.conf.appVer,
-					"device_id": deviceID,
-					"device_brand": "OPPO",
-					"platform": "tv",
-					"device_name": "PCRT00",
-					"device_model": "PCRT00",
-					"build_device": "aosp",
-					"build_product": "PCRT00",
-					"device_gpu": "Adreno%20(TM)%20640",
-					"activity_rect": "%7B%7D",
-					"channel": this.conf.channel,
-					"refresh_token": this.token
-				});
-				let config = {
-					method: "POST",
-					url: "http://api.extscreen.com/ucdrive/token",
-					headers: {
-						"User-Agent": "Mozilla/5.0 (Linux; U; Android 7.1.2; zh-cn; PCRT00 Build/N2G47O) AppleWebKit/533.1 (KHTML, like Gecko) Mobile Safari/533.1",
-						"Connection": "Keep-Alive",
-						"Accept-Encoding": "gzip",
-						"Content-Type": "application/json",
-						"Cookie": "sl-session=VIaxTAKF8mdJBhU2uda0zA=="
-					},
-					data
-				};
-				let req = await axios.request(config);
-				if (req.status === 200) {
-					ENV.set("uc_token_cookie", req.data.data.refresh_token);
-					return await this.getDownload(shareId, stoken, fileId, fileToken, clean);
-				}
+				await this.refreshUcToken();
+				return await this.getDownload(shareId, stoken, fileId, fileToken, clean);
 			}
 		} else {
 			const down = await this.api(`file/download?${this.pr}`, { fids: [this.saveFileIdCaches[fileId]] });
@@ -115828,7 +115847,10 @@ var UCHandler = class {
 					"cookie": low_cookie,
 					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/2.5.20 Chrome/100.0.4896.160 Electron/18.3.5.4-b478491100 Safari/537.36 Channel/pckk_other_ch"
 				};
-				if (!(await this.testSupport(low_url, low_headers))[0]) try {
+				const test_result = await this.testSupport(low_url, low_headers);
+				console.log("test_result:", test_result);
+				if (!test_result[0]) try {
+					console.log(`getDownload:自动刷新UC cookie`);
 					await this.refreshUcCookie("getDownload");
 				} catch (e) {
 					console.log(`getDownload:自动刷新UC cookie失败:${e.message}`);
@@ -115841,7 +115863,7 @@ var UCHandler = class {
 	async getLazyResult(downCache, mediaProxyUrl) {
 		const urls = [];
 		if (Array.isArray(downCache)) downCache.forEach((it) => {
-			urls.push(it.name, it.url);
+			urls.push(it.name, it.url + "#isVideo=true##fastPlayMode##threads=10#");
 		});
 		return {
 			parse: 0,
@@ -115849,7 +115871,7 @@ var UCHandler = class {
 		};
 	}
 	async testSupport(url, headers) {
-		const resp = await req$1.get(url, {
+		const resp = await reqs.get(url, {
 			responseType: "stream",
 			headers: Object.assign({ Range: "bytes=0-0" }, headers)
 		}).catch((err) => {
@@ -115959,7 +115981,7 @@ var UCHandler = class {
 						const start = chunkIdx * chunkSize;
 						const end = Math.min(contentLength - 1, (chunkIdx + 1) * chunkSize - 1);
 						console.log(inReq.id, chunkIdx);
-						const dlResp = await req$1.get(url, {
+						const dlResp = await reqs.get(url, {
 							responseType: "stream",
 							timeout,
 							headers: Object.assign({ Range: `bytes=${start}-${end}` }, headers)
@@ -120477,7 +120499,7 @@ var static_exports = /* @__PURE__ */ __exportAll({
 	merge: () => merge,
 	parseHTML: () => parseHTML,
 	root: () => root$1,
-	text: () => text$1,
+	text: () => text$2,
 	xml: () => xml
 });
 /**
@@ -120535,7 +120557,7 @@ function xml(dom) {
 * @param elements - Elements to render.
 * @returns The rendered document.
 */
-function text$1(elements) {
+function text$2(elements) {
 	const elems = elements !== null && elements !== void 0 ? elements : this ? this.root() : [];
 	let ret = "";
 	for (let i = 0; i < elems.length; i++) ret += textContent(elems[i]);
@@ -122408,7 +122430,7 @@ function getAttr(elem, name, xmlMode) {
 	(_a = elem.attribs) !== null && _a !== void 0 || (elem.attribs = {});
 	if (!name) return elem.attribs;
 	if (hasOwn(elem.attribs, name)) return !xmlMode && rboolean.test(name) ? name : elem.attribs[name];
-	if (elem.name === "option" && name === "value") return text$1(elem.children);
+	if (elem.name === "option" && name === "value") return text$2(elem.children);
 	if (elem.name === "input" && (elem.attribs["type"] === "radio" || elem.attribs["type"] === "checkbox") && name === "value") return "on";
 }
 /**
@@ -122618,7 +122640,7 @@ function val(value) {
 				for (const val of values) this.find(`option[value="${val}"]`).attr("selected", "");
 				return this;
 			}
-			return this.attr("multiple") ? option.toArray().map((el) => text$1(el.children)) : option.attr("value");
+			return this.attr("multiple") ? option.toArray().map((el) => text$2(el.children)) : option.attr("value");
 		}
 		case "button":
 		case "input":
@@ -125377,7 +125399,7 @@ var manipulation_exports = /* @__PURE__ */ __exportAll({
 	prependTo: () => prependTo,
 	remove: () => remove,
 	replaceWith: () => replaceWith,
-	text: () => text,
+	text: () => text$1,
 	toString: () => toString$2,
 	unwrap: () => unwrap,
 	wrap: () => wrap$1,
@@ -126047,9 +126069,9 @@ function html(str) {
 function toString$2() {
 	return this._render(this);
 }
-function text(str) {
-	if (str === void 0) return text$1(this);
-	if (typeof str === "function") return domEach(this, (el, i) => this._make(el).text(str.call(el, i, text$1([el]))));
+function text$1(str) {
+	if (str === void 0) return text$2(this);
+	if (typeof str === "function") return domEach(this, (el, i) => this._make(el).text(str.call(el, i, text$2([el]))));
 	return domEach(this, (el) => {
 		if (!hasChildren(el)) return;
 		for (const child of el.children) child.next = child.prev = child.parent = null;
@@ -392674,9 +392696,13 @@ globalThis.require = rootRequire;
 initializeGlobalDollar();
 const { Ali, Baidu, Baidu2, Cloud, Pan, Quark, UC, Yun } = pans_default;
 const { sleep, sleepSync, getNowTime, computeHash, deepCopy, urljoin: urljoin$1, urljoin2, joinUrl, keysToLowerCase, naturalSort, $js, createBasicAuthHeaders, get_size } = utils_exports$1;
-const moduleCache$2 = /* @__PURE__ */ new Map();
-const ruleObjectCache$1 = /* @__PURE__ */ new Map();
-const jxCache = /* @__PURE__ */ new Map();
+const CACHE_OPTIONS = {
+	max: 100,
+	ttl: 1e3 * 60 * 10
+};
+const moduleCache$2 = new LRUCache(CACHE_OPTIONS);
+const ruleObjectCache$1 = new LRUCache(CACHE_OPTIONS);
+const jxCache = new LRUCache(CACHE_OPTIONS);
 let currentSessionId = null;
 let lastClearTime = 0;
 let sessionCacheCleared = false;
@@ -392727,168 +392753,244 @@ try {
 }
 globalThis.DataBase = DataBase;
 globalThis.database = database;
+const STATIC_UTILS_SANDBOX = {
+	sleep,
+	sleepSync,
+	utils: utils_exports$1,
+	misc: misc_exports,
+	computeHash,
+	deepCopy,
+	urljoin: urljoin$1,
+	urljoin2,
+	joinUrl,
+	naturalSort,
+	$js,
+	createBasicAuthHeaders,
+	get_size,
+	$,
+	getContentType,
+	getMimeType,
+	getParsesDict,
+	getFirstLetter
+};
+const STATIC_DRPY_SANDBOX = {
+	jsp,
+	pdfh,
+	pd,
+	pdfa,
+	jsoup,
+	pdfl,
+	pjfh,
+	pj,
+	pjfa,
+	pq,
+	local,
+	md5X,
+	rsaX,
+	aesX,
+	desX,
+	req,
+	reqs,
+	toBeijingTime,
+	_fetch,
+	XMLHttpRequest: import_XMLHttpRequest.XMLHttpRequest,
+	AIS: ais_default,
+	batchFetch,
+	JSProxyStream,
+	JSFile,
+	js2Proxy,
+	log,
+	print,
+	jsonToCookie,
+	cookieToJson,
+	runMain,
+	cachedRequest
+};
+const STATIC_DRPY_CUSTOM_SANDBOX = {
+	MOBILE_UA,
+	PC_UA,
+	UA,
+	UC_UA,
+	IOS_UA,
+	RULE_CK,
+	CATE_EXCLUDE,
+	TAB_EXCLUDE,
+	OCR_RETRY: 3,
+	OCR_API,
+	nodata,
+	SPECIAL_URL,
+	setResult,
+	setHomeResult,
+	setResult2,
+	urlDeal,
+	tellIsJx: tellIsJx$1,
+	urlencode,
+	encodeUrl,
+	uint8ArrayToBase64,
+	Utf8ArrayToStr,
+	gzip,
+	ungzip: ungzip$1,
+	encodeStr,
+	decodeStr,
+	getCryptoJS,
+	RSA,
+	fixAdM3u8Ai,
+	forceOrder,
+	getQuery,
+	stringify: stringify$1,
+	dealJson,
+	OcrApi,
+	getHome,
+	buildUrl,
+	keysToLowerCase,
+	parseQueryString,
+	buildQueryString,
+	encodeIfContainsSpecialChars,
+	objectToQueryString,
+	forge: import_lib.default,
+	lrcToSrt,
+	strExtract
+};
+const STATIC_LIBS_SANDBOX = {
+	matchesAll,
+	cut,
+	gbkTool,
+	CryptoJS: CryptoJS$1,
+	JSEncrypt: JSEncrypt$1,
+	NODERSA,
+	pako,
+	JSON5: JSON5$1,
+	jinja: jinja$1,
+	template: template$1,
+	batchExecute,
+	atob: atob$1,
+	btoa: btoa$1,
+	base64Encode: base64Encode$1,
+	base64Decode: base64Decode$2,
+	md5: md5$1,
+	rc4Encrypt,
+	rc4Decrypt,
+	rc4,
+	rc4_decode,
+	randomUa,
+	jsonpath,
+	hlsParser,
+	axios,
+	axiosX,
+	URL,
+	pathLib,
+	executeParse,
+	qs,
+	Buffer,
+	URLSearchParams,
+	COOKIE,
+	ENV,
+	_ENV,
+	Quark,
+	Baidu,
+	Baidu2,
+	UC,
+	Ali,
+	Cloud,
+	Yun,
+	Pan,
+	createWebDAVClient,
+	createFTPClient,
+	require: rootRequire,
+	WebSocket: wrapper_default,
+	WebSocketServer: import_websocket_server.default,
+	zlib,
+	JSONbig: import_json_bigint.default,
+	JsonBig,
+	minizlib: esm_exports$2,
+	iconv: globalThis.iconv,
+	cheerio: globalThis.cheerio
+};
+const GLOBAL_STATIC_SANDBOX = {
+	...STATIC_UTILS_SANDBOX,
+	...STATIC_DRPY_SANDBOX,
+	...STATIC_DRPY_CUSTOM_SANDBOX,
+	...STATIC_LIBS_SANDBOX
+};
+const REQ_EXTEND_SCRIPT = new vm.Script(req_extend_code);
+const TEMPLATE_CHECK_FUNC_CODE = `
+globalThis._checkTemplateFunc = async function(html, parseRuleStr) {
+    try {
+        let p = parseRuleStr.split(';');
+        let p0 = p[0];
+        let is_json = p0.startsWith('json:');
+        p0 = p0.replace(/^(jsp:|json:|jq:)/, '');
+        let classes = [];
+        let $pdfa, $pdfh, $pd;
+        if (is_json) {
+            html = dealJson(html);
+            $pdfa = pjfa; $pdfh = pjfh; $pd = pj;
+        } else {
+            $pdfa = pdfa; $pdfh = pdfh; $pd = pd;
+        }
+        if (is_json) {
+            try {
+                let list = $pdfa(html, p0);
+                if (list && list.length > 0) classes = list;
+            } catch (e) { log('[handleTemplateInheritance] json分类解析失败:' + e.message); }
+        } else if (p.length >= 3) {
+            try {
+                let list = $pdfa(html, p0);
+                if (list && list.length > 0) {
+                    for (const it of list) {
+                        try {
+                            let name = $pdfh(it, p[1]);
+                            let url = $pd(it, p[2]);
+                            if (p.length > 3 && p[3]) {
+                                let exp = new RegExp(p[3]);
+                                let match = url.match(exp);
+                                if (match && match[1]) url = match[1];
+                            }
+                            if (name.trim()) classes.push({ 'type_id': url.trim(), 'type_name': name.trim() });
+                        } catch (e) { log('[handleTemplateInheritance] 分类列表解析元素失败:' + e.message); }
+                    }
+                }
+            } catch (e) { log('[handleTemplateInheritance] 分类列表解析失败:' + e.message); }
+        }
+        return { class: classes };
+    } catch (e) {
+        log('[handleTemplateInheritance] 模板测试执行错误:', e.message);
+        return { class: [] };
+    }
+};
+`;
+const SANDBOX_INIT_CODE = es6_extend_code + "\n" + TEMPLATE_CHECK_FUNC_CODE;
+const SANDBOX_INIT_SCRIPT = new vm.Script(SANDBOX_INIT_CODE);
+const TEMPLATE_CHECK_CALL_SCRIPT = new vm.Script(`_checkTemplateFunc(globalThis._tempHtml, globalThis._tempParse)`);
+const CACHED_REQUEST_SCRIPT = new vm.Script(`
+(async function() {
+    try {
+        return await cachedRequest(request, globalThis._tempHost, globalThis._tempHeaders, 'host');
+    } catch (e) {
+        log('[handleTemplateInheritance] 获取HOST页面失败:', e.message);
+        return '';
+    }
+})()
+`);
+const INIT_HEADERS_SCRIPT = new vm.Script(`
+globalThis.oheaders = rule.oheaders
+globalThis.rule_fetch_params = rule.rule_fetch_params;
+`);
+const INIT_JSOUP_SCRIPT = new vm.Script(`
+globalThis.jsp = new jsoup(rule.host||'');
+globalThis.pdfh = pdfh;
+globalThis.pd = pd;
+globalThis.pdfa = pdfa;
+globalThis.HOST = rule.host||'';
+`);
 async function getSandbox(env = {}) {
 	const { getProxyUrl, requestHost, hostUrl, fServer } = env;
 	await CryptoJSW.loadAllWasm();
-	const utilsSanbox = {
-		sleep,
-		sleepSync,
-		utils: utils_exports$1,
-		misc: misc_exports,
-		computeHash,
-		deepCopy,
-		urljoin: urljoin$1,
-		urljoin2,
-		joinUrl,
-		naturalSort,
-		$js,
-		createBasicAuthHeaders,
-		get_size,
-		$,
-		pupWebview,
-		getProxyUrl,
-		requestHost,
-		hostUrl,
-		fServer,
-		getContentType,
-		getMimeType,
-		getParsesDict,
-		getFirstLetter
-	};
-	const drpySanbox = {
-		jsp,
-		pdfh,
-		pd,
-		pdfa,
-		jsoup,
-		pdfl,
-		pjfh,
-		pj,
-		pjfa,
-		pq,
-		local,
-		md5X,
-		rsaX,
-		aesX,
-		desX,
-		req,
-		reqs,
-		toBeijingTime,
-		_fetch,
-		XMLHttpRequest: import_XMLHttpRequest.XMLHttpRequest,
-		simplecc,
-		AIS: ais_default,
-		batchFetch,
-		JSProxyStream,
-		JSFile,
-		js2Proxy,
-		log,
-		print,
-		jsonToCookie,
-		cookieToJson,
-		runMain,
-		cachedRequest
-	};
-	const drpyCustomSanbox = {
-		MOBILE_UA,
-		PC_UA,
-		UA,
-		UC_UA,
-		IOS_UA,
-		RULE_CK,
-		CATE_EXCLUDE,
-		TAB_EXCLUDE,
-		OCR_RETRY: 3,
-		OCR_API,
-		nodata,
-		SPECIAL_URL,
-		setResult,
-		setHomeResult,
-		setResult2,
-		urlDeal,
-		tellIsJx: tellIsJx$1,
-		urlencode,
-		encodeUrl,
-		uint8ArrayToBase64,
-		Utf8ArrayToStr,
-		gzip,
-		ungzip: ungzip$1,
-		encodeStr,
-		decodeStr,
-		getCryptoJS,
-		RSA,
-		fixAdM3u8Ai,
-		forceOrder,
-		getQuery,
-		stringify: stringify$1,
-		dealJson,
-		OcrApi,
-		getHome,
-		buildUrl,
-		keysToLowerCase,
-		parseQueryString,
-		buildQueryString,
-		encodeIfContainsSpecialChars,
-		objectToQueryString,
-		forge: import_lib.default,
-		lrcToSrt,
-		strExtract
-	};
-	const libsSanbox = {
-		matchesAll,
-		cut,
-		gbkTool,
-		CryptoJS: CryptoJS$1,
+	const dynamicLibsSandbox = {
 		CryptoJSW,
-		JSEncrypt: JSEncrypt$1,
-		NODERSA,
-		pako,
-		JSON5: JSON5$1,
-		jinja: jinja$1,
-		template: template$1,
-		batchExecute,
-		atob: atob$1,
-		btoa: btoa$1,
-		base64Encode: base64Encode$1,
-		base64Decode: base64Decode$2,
-		md5: md5$1,
-		rc4Encrypt,
-		rc4Decrypt,
-		rc4,
-		rc4_decode,
-		randomUa,
-		jsonpath,
-		hlsParser,
-		axios,
-		axiosX,
-		URL,
-		pathLib,
-		executeParse,
-		qs,
-		Buffer,
-		URLSearchParams,
-		COOKIE,
-		ENV,
-		_ENV,
-		Quark,
-		Baidu,
-		Baidu2,
-		UC,
-		Ali,
-		Cloud,
-		Yun,
-		Pan,
-		createWebDAVClient,
-		createFTPClient,
 		DataBase,
 		database,
-		require: rootRequire,
-		WebSocket: wrapper_default,
-		WebSocketServer: import_websocket_server.default,
-		zlib,
-		JSONbig: import_json_bigint.default,
-		JsonBig,
-		minizlib: esm_exports$2,
+		simplecc,
 		iconv: globalThis.iconv,
 		cheerio: globalThis.cheerio
 	};
@@ -392909,13 +393011,16 @@ async function getSandbox(env = {}) {
 		lazy: async function() {},
 		_asyncGetRule: null,
 		_asyncGetLazy: null,
-		...utilsSanbox,
-		...drpySanbox,
-		...drpyCustomSanbox,
-		...libsSanbox
+		...GLOBAL_STATIC_SANDBOX,
+		pupWebview,
+		getProxyUrl,
+		requestHost,
+		hostUrl,
+		fServer,
+		...dynamicLibsSandbox
 	};
 	const context = vm.createContext(sandbox);
-	new vm.Script(es6_extend_code).runInContext(context);
+	SANDBOX_INIT_SCRIPT.runInContext(context);
 	sandbox.$.setSandbox(sandbox);
 	return {
 		sandbox,
@@ -392975,7 +393080,7 @@ async function init$2(filePath, env = {}, refresh) {
 			});
 		};
 		sandbox.rule = await executeWithTimeout(ruleScript, context, 3e4);
-		new vm.Script(req_extend_code).runInContext(context);
+		REQ_EXTEND_SCRIPT.runInContext(context);
 		const rule = sandbox.rule;
 		if (moduleExt) if (moduleExt.startsWith("../json")) rule.params = urljoin$1(env.jsonUrl, moduleExt.slice(8));
 		else rule.params = moduleExt;
@@ -392985,6 +393090,9 @@ async function init$2(filePath, env = {}, refresh) {
 		const moduleObject = rule;
 		moduleObject.cost = t2 - t1;
 		moduleObject.context = context;
+		delete sandbox._asyncGetRule;
+		delete sandbox.module;
+		delete sandbox.exports;
 		moduleCache$2.set(hashMd5, {
 			moduleObject,
 			hash: fileHash
@@ -393021,6 +393129,9 @@ async function getRuleObject(filePath, env, refresh) {
 		ruleObject.filterable = ruleObject.hasOwnProperty("filterable") ? Number(ruleObject.filterable) : 0;
 		ruleObject.quickSearch = ruleObject.hasOwnProperty("quickSearch") ? Number(ruleObject.quickSearch) : 0;
 		ruleObject.cost = t2 - t1;
+		delete sandbox._asyncGetRule;
+		delete sandbox.module;
+		delete sandbox.exports;
 		ruleObjectCache$1.set(filePath, {
 			ruleObject,
 			hash: fileHash
@@ -393053,7 +393164,7 @@ async function initJx(filePath, env, refresh) {
 		const jxResult = await sandbox._asyncGetLazy;
 		sandbox.lazy = jxResult.lazy;
 		sandbox.jx = jxResult.jx;
-		new vm.Script(req_extend_code).runInContext(context);
+		REQ_EXTEND_SCRIPT.runInContext(context);
 		let t2 = getNowTime();
 		const jxObj = {
 			...sandbox.jx,
@@ -393061,6 +393172,9 @@ async function initJx(filePath, env, refresh) {
 		};
 		const cost = t2 - t1;
 		log(`[initJx] 加载解析:${filePath} 耗时 ${cost}毫秒`);
+		delete sandbox._asyncGetLazy;
+		delete sandbox.module;
+		delete sandbox.exports;
 		jxCache.set(hashMd5, {
 			jxObj,
 			hash: fileHash
@@ -393256,23 +393370,12 @@ async function initParse(rule, env, vm, context) {
 		"timeout": rule.timeout,
 		"encoding": rule.encoding
 	};
-	const originalScript = new vm.Script(`
-globalThis.oheaders = rule.oheaders
-globalThis.rule_fetch_params = rule.rule_fetch_params;
-        `);
-	originalScript.runInContext(context);
+	INIT_HEADERS_SCRIPT.runInContext(context);
 	if (typeof rule.预处理 === "function") {
 		log("[initParse] Executing 预处理...");
 		await rule.预处理(env);
 	}
-	const otherScript = new vm.Script(`
-globalThis.jsp = new jsoup(rule.host||'');
-globalThis.pdfh = pdfh;
-globalThis.pd = pd;
-globalThis.pdfa = pdfa;
-globalThis.HOST = rule.host||'';
-        `);
-	otherScript.runInContext(context);
+	INIT_JSOUP_SCRIPT.runInContext(context);
 	return rule;
 }
 async function home$2(filePath, env, filter = 1) {
@@ -393400,6 +393503,7 @@ async function runMain(main_func_code, arg) {
 function clearAllCache() {
 	const excludeList = ["APP模板配置"];
 	let clearedCount = 0;
+	const moduleKeysToDelete = [];
 	for (const [key, value] of moduleCache$2.entries()) {
 		let shouldSkip = false;
 		for (const excludeName of excludeList) if (value.moduleObject && value.moduleObject.title && value.moduleObject.title.includes(excludeName)) {
@@ -393407,11 +393511,13 @@ function clearAllCache() {
 			shouldSkip = true;
 			break;
 		}
-		if (!shouldSkip) {
-			moduleCache$2.delete(key);
-			clearedCount++;
-		}
+		if (!shouldSkip) moduleKeysToDelete.push(key);
 	}
+	moduleKeysToDelete.forEach((key) => {
+		moduleCache$2.delete(key);
+		clearedCount++;
+	});
+	const ruleKeysToDelete = [];
 	for (const [filePath, value] of ruleObjectCache$1.entries()) {
 		let shouldSkip = false;
 		for (const excludeName of excludeList) if (filePath.includes(excludeName)) {
@@ -393419,11 +393525,13 @@ function clearAllCache() {
 			shouldSkip = true;
 			break;
 		}
-		if (!shouldSkip) {
-			ruleObjectCache$1.delete(filePath);
-			clearedCount++;
-		}
+		if (!shouldSkip) ruleKeysToDelete.push(filePath);
 	}
+	ruleKeysToDelete.forEach((key) => {
+		ruleObjectCache$1.delete(key);
+		clearedCount++;
+	});
+	const jxKeysToDelete = [];
 	for (const [key, value] of jxCache.entries()) {
 		let shouldSkip = false;
 		for (const excludeName of excludeList) if (key.includes(excludeName)) {
@@ -393431,11 +393539,12 @@ function clearAllCache() {
 			shouldSkip = true;
 			break;
 		}
-		if (!shouldSkip) {
-			jxCache.delete(key);
-			clearedCount++;
-		}
+		if (!shouldSkip) jxKeysToDelete.push(key);
 	}
+	jxKeysToDelete.forEach((key) => {
+		jxCache.delete(key);
+		clearedCount++;
+	});
 	pageRequestCache.clear();
 	log("[clearAllCache] 已清理页面请求缓存");
 	sessionCacheStates.clear();
@@ -393475,98 +393584,18 @@ async function handleTemplateInheritance(rule, context) {
 		const muban = template$1.getMubans();
 		if (rule["模板"] === "自动") try {
 			let host_headers = rule["headers"] || {};
-			const cacheKey = md5$1(rule.host + JSON.stringify(host_headers));
 			log(`[handleTemplateInheritance] 请求HOST页面: ${rule.host}`);
-			let host_html = await new vm.Script(`
-                    (async function() {
-                        try {
-                            return await cachedRequest(request, '${rule.host}', ${JSON.stringify({ headers: host_headers })}, 'host');
-                        } catch (e) {
-                            log('[handleTemplateInheritance] 获取HOST页面失败:', e.message);
-                            return '';
-                        }
-                    })()
-                `).runInContext(context);
+			context._tempHost = rule.host;
+			context._tempHeaders = host_headers;
+			let host_html = await CACHED_REQUEST_SCRIPT.runInContext(context);
 			let match_muban = "";
 			let muban_keys = Object.keys(muban).filter((it) => !/默认|短视2|采集1/.test(it));
 			for (let muban_key of muban_keys) try {
 				if (muban[muban_key].class_parse) {
 					let class_parse = muban[muban_key].class_parse;
-					const host_data = await new vm.Script(`
-                                  (async function() {
-                                      try {
-                                          let html = ${JSON.stringify(host_html)};
-                                          let p = ${JSON.stringify(class_parse)};
-                                          let classes = [];
-                                          
-                                          // 处理class_parse字符串解析
-                                          p = p.split(';');
-                                          let p0 = p[0];
-                                          let is_json = p0.startsWith('json:');
-                                          p0 = p0.replace(/^(jsp:|json:|jq:)/, '');
-                                          
-                                          if (html) {
-                                              let $pdfa, $pdfh, $pd;
-                                              if (is_json) {
-                                                  html = dealJson(html);
-                                                  $pdfa = pjfa;
-                                                  $pdfh = pjfh;
-                                                  $pd = pj;
-                                              } else {
-                                                  $pdfa = pdfa;
-                                                  $pdfh = pdfh;
-                                                  $pd = pd;
-                                              }
-                                              
-                                              if (is_json) {
-                                                  try {
-                                                      let list = $pdfa(html, p0);
-                                                      if (list && list.length > 0) {
-                                                          classes = list;
-                                                      }
-                                                  } catch (e) {
-                                                      log('[handleTemplateInheritance] json分类解析失败:' + e.message);
-                                                  }
-                                              } else if (p.length >= 3) {
-                                                  try {
-                                                      let list = $pdfa(html, p0);
-                                                      if (list && list.length > 0) {
-                                                          for (const it of list) {
-                                                              try {
-                                                              //log('[handleTemplateInheritance] test it:',it);
-                                                                  let name = $pdfh(it, p[1]);
-                                                                  let url = $pd(it, p[2]);
-                                                                  if (p.length > 3 && p[3]) {
-                                                                      let exp = new RegExp(p[3]);
-                                                                      let match = url.match(exp);
-                                                                      if (match && match[1]) {
-                                                                          url = match[1];
-                                                                      }
-                                                                  }
-                                                                  if (name.trim()) {
-                                                                      classes.push({
-                                                                          'type_id': url.trim(),
-                                                                          'type_name': name.trim()
-                                                                      });
-                                                                  }
-                                                              } catch (e) {
-                                                                  log('[handleTemplateInheritance] 分类列表解析元素失败:' + e.message);
-                                                              }
-                                                          }
-                                                      }
-                                                  } catch (e) {
-                                                      log('[handleTemplateInheritance] 分类列表解析失败:' + e.message);
-                                                  }
-                                              }
-                                          }
-                                          
-                                          return { class: classes };
-                                      } catch (e) {
-                                          log('[handleTemplateInheritance] 模板测试执行错误:', e.message);
-                                          return { class: [] };
-                                      }
-                                  })()
-                              `).runInContext(context);
+					context._tempHtml = host_html;
+					context._tempParse = class_parse;
+					const host_data = await TEMPLATE_CHECK_CALL_SCRIPT.runInContext(context);
 					if (host_data.class && host_data.class.length > 0) {
 						match_muban = muban_key;
 						log(`[handleTemplateInheritance] 自动匹配模板:【${muban_key}】`);
@@ -393595,6 +393624,10 @@ async function handleTemplateInheritance(rule, context) {
 		}
 		delete rule["模板"];
 		delete rule["模板修改"];
+		delete context._tempHost;
+		delete context._tempHeaders;
+		delete context._tempHtml;
+		delete context._tempParse;
 	} catch (error) {
 		log("[handleTemplateInheritance] 模板继承处理失败:", error.message);
 	}
@@ -393958,6 +393991,27 @@ const ENGINES = {
 	php: php_default,
 	catvod: catvod_default
 };
+/**
+* 创建带超时的Promise包装函数
+* 为API操作添加超时控制，防止长时间阻塞
+*
+* @param {Promise} promise - 要包装的Promise对象
+* @param {number|null} timeoutMs - 超时时间（毫秒），null则使用默认值
+* @param {string} operation - 操作描述，用于错误信息
+* @param {string|null} invokeMethod - 调用方法类型，用于确定超时时间
+* @returns {Promise} 包装后的Promise，会在超时时reject
+*/
+function withTimeout(promise, timeoutMs = null, operation = "API操作", invokeMethod = null) {
+	let defaultTimeout;
+	if (invokeMethod === "action") defaultTimeout = 60 * 1e3;
+	else defaultTimeout = 20 * 1e3;
+	const actualTimeout = timeoutMs || defaultTimeout;
+	return Promise.race([promise, new Promise((_, reject) => {
+		setTimeout(() => {
+			reject(/* @__PURE__ */ new Error(`${operation}超时 (${actualTimeout}ms)`));
+		}, actualTimeout);
+	})]);
+}
 async function getEngine(moduleName, query, inject_env) {
 	inject_env = inject_env || {};
 	let { apiEngine, moduleDir, _ext, modulePath } = getApiEngine(ENGINES, moduleName, query, options);
@@ -394011,7 +394065,7 @@ async function getEngine(moduleName, query, inject_env) {
 		const _modulePath = path.join(moduleDir, `${_moduleName}${_ext}`);
 		if (!existsSync(_modulePath)) return null;
 		const _env = getEnv(_moduleName);
-		const RULE = await apiEngine.getRule(_modulePath, _env);
+		const RULE = await withTimeout(apiEngine.getRule(_modulePath, _env), null, `获取规则[${_moduleName}]`);
 		/**
 		* 规则函数调用方法
 		* 提供统一的规则方法调用接口
@@ -394049,39 +394103,40 @@ async function getEngine(moduleName, query, inject_env) {
 					break;
 			}
 			if (!invokeMethod) if (typeof RULE[_method] !== "function") return null;
-			else return await RULE[_method](..._args);
-			return await apiEngine[invokeMethod](_modulePath, _env, ..._args);
+			else return await withTimeout(RULE[_method], null, `规则方法[${_method}]`);
+			return await withTimeout(apiEngine[invokeMethod](_modulePath, _env, ..._args), null, `规则调用[${_method}]`, invokeMethod);
 		};
 		return RULE;
 	};
 	const pg = Number(query.pg) || 1;
-	if ("play" in query) return await apiEngine.play(modulePath, env, query.flag, query.play);
+	if ("play" in query) return await withTimeout(apiEngine.play(modulePath, env, query.flag, query.play), null, `播放接口[${moduleName}]`);
 	if ("ac" in query && "t" in query) {
 		let ext = query.ext;
 		let extend = {};
 		if (ext) try {
-			extend = ext;
+			extend = JSON.parse(base64Decode$2(ext));
 		} catch (e) {
 			console.error(`筛选参数错误:${e.message}`);
 		}
-		return await apiEngine.category(modulePath, env, query.t, pg, 1, extend);
+		return await withTimeout(apiEngine.category(modulePath, env, query.t, pg, 1, extend), null, `分类接口[${moduleName}]`);
 	}
-	if ("ac" in query && "ids" in query) return await apiEngine.detail(modulePath, env, query.ids);
-	if ("ac" in query && "action" in query) return await apiEngine.action(modulePath, env, query.action, query.value);
+	if ("ac" in query && "ids" in query) return await withTimeout(apiEngine.detail(modulePath, env, query.ids), null, `详情接口[${moduleName}]`);
+	if ("ac" in query && "action" in query) return await withTimeout(apiEngine.action(modulePath, env, query.action, query.value), null, `动作接口[${moduleName}]`, "action");
 	if ("wd" in query) {
 		const quick = "quick" in query ? query.quick : 0;
-		return await apiEngine.search(modulePath, env, query.wd, quick, pg);
+		return await withTimeout(apiEngine.search(modulePath, env, query.wd, quick, pg), null, `搜索接口[${moduleName}]`);
 	}
-	if ("proxy" in query) return await apiEngine.proxy(modulePath, env, query);
+	if ("proxy" in query) return await withTimeout(apiEngine.proxy(modulePath, env, query), null, `代理接口[${moduleName}]`);
 	if ("parse" in query) {
 		let t1 = (/* @__PURE__ */ new Date()).getTime();
 		const jxName = query.parse;
-		const backResp = await jx(path.join(options.jxDir, `${jxName}.js`), env, query);
+		const backResp = await withTimeout(jx(path.join(options.jxDir, `${jxName}.js`), env, query), null, `解析接口[${jxName}]`);
 		const statusCode = 200;
 		const mediaType = "application/json; charset=utf-8";
 		if (typeof backResp === "object") {
 			if (!backResp.code) backResp.code = backResp.url && backResp.url !== query.url ? 200 : 404;
 			if (!backResp.msg) backResp.msg = `${jxName}解析${backResp.url && backResp.url !== query.url ? "成功" : "失败"}`;
+			backResp.type = `${mediaType}; charset=utf-8`;
 			backResp.cost = (/* @__PURE__ */ new Date()).getTime() - t1;
 			let backRespSend = backResp;
 			console.log(backRespSend);
@@ -394094,7 +394149,8 @@ async function getEngine(moduleName, query, inject_env) {
 				code: statusCode,
 				url: backResp,
 				msg: `${jxName}解析${msgState}`,
-				cost: t2 - t1
+				cost: t2 - t1,
+				type: `${mediaType}; charset=utf-8`
 			};
 			console.log(backRespSend);
 			return backRespSend;
@@ -394104,20 +394160,21 @@ async function getEngine(moduleName, query, inject_env) {
 				code: 404,
 				url: "",
 				msg: `${jxName}解析失败`,
-				cost: t2 - t1
+				cost: t2 - t1,
+				type: `${mediaType}; charset=utf-8`
 			};
 			console.log(backRespSend);
 			return backRespSend;
 		}
 	}
 	if ("refresh" in query) {
-		const { context, ...responseObject } = await apiEngine.init(modulePath, env, true);
+		const { context, ...responseObject } = await withTimeout(apiEngine.init(modulePath, env, true), null, `初始化接口[${moduleName}]`);
 		return responseObject;
 	}
 	if (!("filter" in query)) query.filter = 1;
 	const filter = "filter" in query ? query.filter : 1;
-	const resultHome = await apiEngine.home(modulePath, env, filter);
-	const resultHomeVod = await apiEngine.homeVod(modulePath, env);
+	const resultHome = await withTimeout(apiEngine.home(modulePath, env, filter), null, `首页接口[${moduleName}]`);
+	const resultHomeVod = await withTimeout(apiEngine.homeVod(modulePath, env), null, `推荐接口[${moduleName}]`);
 	let result = { ...resultHome };
 	if (Array.isArray(resultHomeVod) && resultHomeVod.length > 0) Object.assign(result, { list: resultHomeVod });
 	return result;
