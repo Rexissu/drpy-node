@@ -105778,39 +105778,6 @@ req$1.interceptors.request.use(async (config) => {
 * - 自动继承系统代理
 */
 const reqs = new axios$1.create({ httpsAgent: new https.Agent({ rejectUnauthorized: false }) });
-reqs.interceptors.request.use(async (config) => {
-	if (!config.url) return config;
-	try {
-		const proxy = await getSystemProxy();
-		if (proxy) {
-			config.httpsAgent = new import_dist$1.HttpsProxyAgent(proxy);
-			config.proxy = false;
-			return config;
-		}
-		let fullUrl = config.url;
-		if (config.baseURL && !/^https?:\/\//i.test(fullUrl)) try {
-			fullUrl = new URL(fullUrl, config.baseURL).toString();
-		} catch (e) {}
-		const urlObj = new URL(fullUrl);
-		const hostname = urlObj.hostname;
-		if (!hostname || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname === "localhost") return config;
-		const ip = await resolveDoh(hostname);
-		if (ip && ip !== hostname) {
-			if (!config.headers) config.headers = {};
-			let hasHost = false;
-			const keys = Object.keys(config.headers);
-			for (const k of keys) if (k.toLowerCase() === "host") {
-				hasHost = true;
-				break;
-			}
-			if (!hasHost) config.headers.Host = hostname;
-			urlObj.hostname = ip;
-			config.url = urlObj.toString();
-			if (config.baseURL) delete config.baseURL;
-		}
-	} catch (e) {}
-	return config;
-});
 //#endregion
 //#region ../utils/pan/ali.js
 const apiUrl = "https://api.aliyundrive.com";
@@ -114530,15 +114497,6 @@ var QuarkHandler = class {
 	* @returns {Promise<void>}
 	*/
 	async initQuark() {
-		if (this.token) {
-			let exp = JSON.parse(import_crypto_js.default.enc.Base64.parse(this.token.split(".")[1]).toString(import_crypto_js.default.enc.Utf8));
-			let now = Math.floor(Date.now() / 1e3);
-			if (exp.exp < now) console.log("登录状态已过期,重新登录,请及时更换Token");
-			else {
-				console.log("登录成功，继续使用,可使用时间截止到：" + (/* @__PURE__ */ new Date(exp.exp * 1e3)).toLocaleString());
-				console.log("QuarkTV token获取成功：" + this.token);
-			}
-		}
 		if (this.cookie) console.log("cookie 获取成功");
 		else console.log("cookie 获取失败");
 	}
@@ -114676,13 +114634,13 @@ var QuarkHandler = class {
 		Object.assign(headers, { Cookie: cookie });
 		method = method || "post";
 		let link = `${this.apiUrl}/${url}`;
-		const resp = method === "get" ? await req$1.get(link, { headers }).catch((err) => {
+		const resp = method === "get" ? await reqs.get(link, { headers }).catch((err) => {
 			console.error(err.message);
 			return err.response || {
 				status: 500,
 				data: {}
 			};
-		}) : await req$1.post(link, data, { headers }).catch((err) => {
+		}) : await reqs.post(link, data, { headers }).catch((err) => {
 			console.error(err.message);
 			return err.response || {
 				status: 500,
@@ -114976,40 +114934,6 @@ var QuarkHandler = class {
 		const data = method + "&" + pathname + "&" + timestamp + "&" + key;
 		return import_crypto_js.default.SHA256(data).toString();
 	}
-	async refreshToken() {
-		let data = JSON.stringify({
-			"req_id": reqId,
-			"app_ver": this.conf.appVer,
-			"device_id": deviceID,
-			"device_brand": "OPPO",
-			"platform": "tv",
-			"device_name": "PCRT00",
-			"device_model": "PCRT00",
-			"build_device": "aosp",
-			"build_product": "PCRT00",
-			"device_gpu": "Adreno%20(TM)%20640",
-			"activity_rect": "%7B%7D",
-			"channel": this.conf.channel,
-			"refresh_token": this.token
-		});
-		let config = {
-			method: "POST",
-			url: "http://api.extscreen.com/quarkdrive",
-			headers: {
-				"User-Agent": "Mozilla/5.0 (Linux; U; Android 7.1.2; zh-cn; PCRT00 Build/N2G47O) AppleWebKit/533.1 (KHTML, like Gecko) Mobile Safari/533.1",
-				"Connection": "Keep-Alive",
-				"Accept-Encoding": "gzip",
-				"Content-Type": "application/json",
-				"Cookie": "sl-session=VIaxTAKF8mdJBhU2uda0zA=="
-			},
-			data
-		};
-		let req = await axios.request(config);
-		if (req.status === 200) {
-			ENV.set("uc_token_cookie", req.data.data.refresh_token);
-			return await this.getDownload(shareId, stoken, fileId, fileToken, clean);
-		}
-	}
 	async getDownload(shareId, stoken, fileId, fileToken, clean) {
 		await this.initQuark();
 		if (!this.saveFileIdCaches[fileId]) {
@@ -115109,8 +115033,72 @@ var QuarkHandler = class {
 		}
 		return null;
 	}
+	async getToken() {
+		let t = Math.floor((/* @__PURE__ */ new Date()).getTime() / 1e3);
+		let data = JSON.stringify({
+			"conversation_id": "300000" + t,
+			"conversation_type": 3,
+			"msg_id": t + "000"
+		});
+		let config = {
+			method: "POST",
+			url: "https://drive-social-api.quark.cn/1/clouddrive/chat/conv/file/acquire_dl_token?pr=ucpro&fr=pc&sys=darwin&ve=3.19",
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/3.23.2 Chrome/112.0.5615.165 Electron/24.1.3.8 Safari/537.36 Channel/pckk_other_ch",
+				"Connection": "keep-alive",
+				"Accept": "application/json, text/plain, */*",
+				"Accept-Encoding": "gzip, deflate, br",
+				"Content-Type": "application/json",
+				"accept-language": "zh-CN",
+				"origin": "https://pan.quark.cn",
+				"sec-fetch-dest": "empty",
+				"sec-fetch-mode": "cors",
+				"sec-fetch-site": "cross-site",
+				"sec-ch-ua": "\"Not:A-Brand\";v=\"99\", \"Chromium\";v=\"112\"",
+				"sec-ch-ua-mobile": "?0",
+				"sec-ch-ua-platform": "\"Windows\"",
+				"referer": "https://pan.quark.cn/",
+				"Cookie": "_UP_A4A_11_=wb9ce1f8a7f74209b248cb5877a6a876; _UP_D_=pc; tfstk=gy2rZY6dQTBPmYbgblDFQOhX71M-pv7_ZJgIxkqnV40oVYZ3gkZN2Da7x2PEoyIJFYbJK2qTkbguRYTFLrko97gIP2kUvPSf5O6_2uHKEN_1C6GsZ4kK-9MhGxcbeD-R5O6_quHKKN__NjmeBVnnK0co-Ejq2qmoxy0oiEmZXv03-yj4mqnnK24nKirmkDDn-ycsi2063cllqNA0iO9nAbugqqJU2-ooaQEoupv33dGrSyg2Kp2q2kJ_DBpNOVVtPfguot9rLomUufNP7LzUxlFngJ8lVP40TymYMwRE7Wq76-GXxG0geo2tnj6Gbo2YPue4AHXncPg028DFIGHrE4DqDJ_vE2P0t8G-pUbEJ-r0EWSz_enc4z2LaeAEZmnq5iSVbveZi_88v3Rp9bFx0VsR2BdKZmnq5iS29BhoDmu10i5..; __uid=AARfyLe8Bke3UGL2FjhvNQn6; __sdid=AATHIp7rA8mvfKhhMvPnt0milUEzXi1ReJN0CjChc4LeUA6qYUdYA32jmaL/Lk2AA4s=; __pus=bd604e2725229c945e994c227de77f1cAASVpc7pXsTooap3JBI0XiJI9JU/JUngO9SJCOIRNOLXngLdOfozAiiwF9CnY/xOiEgE8NvKDDg1ZAwX7nVqe9H2ib5aMTAi+a2DfaPE6/6Won1vUOAfKCNELRmJOeYhVn3/eQUYx6B9EIw9HCYjQoKVh76daPI2lnp3QBTK/5zWGya9rVul08y86xpY3APre7I=; __kp=eb241d80-1ee6-11f1-85bf-6167dfcf1acd; __kuus=NenaSYNIw/O9SzABV2HtnjTDoH5aJthk7nOgDdt9pHeaJmMkCD/TY+jVFIrCn+WeFaQVR9h+E/YoStTBZAtB9va0ghzlZCgNuddki8Z8WOnYug==; __puus=2baf96cce907422be5e242bb1d280977AATi54Q/fKnsA5nM/iG/TZHL12hYZj/ELuUFbEwO/2jIXaSGwmvXppDKCITu73rdsZ1hRR0cY2QRpWdM0o+nFv65fCf5ZwPIaGHvUK9BOg3653jTngpTAj41u8kq5vTIDnPDPGWlYPYiUehDbyYBwxKYl12BFSjonkfKybr3Fpc2TYQcm566OQTrPzsupcOkOoa8CQllYvsoVyEBF2ZpiX/5"
+			},
+			data
+		};
+		let html = await axios.request(config);
+		if (html.status === 200) return html.data.data.token;
+	}
+	async getUrl(shareId, stoken, fileId, fileToken) {
+		await this.initQuark();
+		let token = await this.getToken();
+		let data = JSON.stringify({
+			"fids": [fileId],
+			"fids_token": [fileToken],
+			"pwd_id": shareId,
+			"stoken": stoken,
+			"speedup_session": "",
+			"token": token
+		});
+		let config = {
+			method: "POST",
+			url: "https://drive-pc.quark.cn/1/clouddrive/file/download?pr=ucpro&fr=pc",
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/3.20.0 Chrome/112.0.5615.165 Electron/24.1.3.8 Safari/537.36 Channel/pckk_other_ch",
+				"Connection": "keep-alive",
+				"Accept": "*/*,application/json;charset=utf-8",
+				"Accept-Encoding": "gzip, deflate, br, zstd",
+				"Content-Type": "application/json",
+				"Cookie": "b-user-id=7a421e0c-2ff4-1251-4069-cdfbfedcaf8d; _UP_A4A_11_=wb9cf15ce78d47ed921a9fab3faa85e8; xlly_s=1; __sdid=AAQCvlprpJtHMDSTmliW7CTXaxFJONVhZZyKc8NgJ6Y+XH4iO1v3Q8gYFeEi2hqeV4U=; _UP_D_=pc; __pus=97012d074b8d70d6eeaeb7dbe3fcb05dAAQB4QUahCaghYFA9y/NYud63QbrjWpcO/mp4OgGcA2UZ5O+VMUlfCpacaDzbRBV2O/DK9y9iAFBUL7iPmzdj2d9; __kp=ea759a90-1ed1-11f1-8f67-e7e56f2ee996; __kps=AARfyLe8Bke3UGL2FjhvNQn6; __ktd=axb8KS+96BcSmmEd+gddqg==; __uid=AARfyLe8Bke3UGL2FjhvNQn6; __puus=c6ca8123ab4024f139092c58678de061AATi54Q/fKnsA5nM/iG/TZHLzf8buD1i2D3OKKcgKFxmYvTq9ypLK3mbAQlXFlJz6zEGV7aROE4eXsRbMGviOH4EpwIMv8HZ3UUDPfRoIVsx+mV9xMqXujCxpQR96l9Alpe2B15pFBZl94/lBMSORn+M/cocX9mAe2wX82JvYhQYO46JRC1evvevyyyzaai9ItKcf72BRC6QzioBIic/XHI8; isg=BDg4TjMppS-k-Mk0_qdGtZTlCebKoZwrBz4YK3KgQXMmjdJ3GrWXu63lQY093VQD; tfstk=gTJiuT2wCC5_fZaEErWsOziN8jlKBO6X3EeAktQqTw7Ckctv0ty2knBOgVtv-Z7F2SJA0f_cTUs7_CCZSemDWnwA7NpAns8RR5Rx5qtFmULRuiSqcMkeuUYcGc_AuZYv0CnKeYK6ft62o4H-emTk0mLcbsyaLmScDPod_tj5i4Wqy4HL9k5sWt-TUIxGLH7CmiyNuEWULi7Ubl8V76zFqg6VuE8VTWSRcGPN7N-UTwsV3Z8V3DXFRiXVuEWqxHllpf763pJErkLuNeO_cCsGsa-N7nKvLPWT1nQ33-JHt1brQw243pjM09gPi8cAzQ_Owa8EpRXDYiYhwC0uIEx2VI5HnPo9zeRDuMOIoSbkghdWp6E4_HvcS_JNtoiJ4hs2usAIr8IGBBfkICib8h8RSQW6Du09x_AhNM5Um5W9w3pfadkgPwC5mefJs42MzglbT7y5t-sEDpPbG1SCxapyAdOShopf3Dm3am1NAG_-xDVbG1SCxannx7kf_Ms1y"
+			},
+			data
+		};
+		let html = await axios.request(config).catch((e) => e);
+		if (html.status === 200) return html.data.data.map((it) => {
+			return {
+				name: it.video_max_resolution,
+				url: it.download_url
+			};
+		});
+	}
 	async testSupport(url, headers) {
-		const resp = await req$1.get(url, {
+		const resp = await reqs.get(url, {
 			responseType: "stream",
 			headers
 		}).catch((err) => {
@@ -115220,7 +115208,7 @@ var QuarkHandler = class {
 						const start = chunkIdx * chunkSize;
 						const end = Math.min(contentLength - 1, (chunkIdx + 1) * chunkSize - 1);
 						console.log(inReq.id, chunkIdx);
-						const dlResp = await req$1.get(url, {
+						const dlResp = await reqs.get(url, {
 							responseType: "stream",
 							timeout,
 							headers: Object.assign({ Range: `bytes=${start}-${end}` }, headers)
@@ -115621,6 +115609,7 @@ var UCHandler = class {
 			const subDir = [];
 			for (const item of items) if (item.dir === true) subDir.push(item);
 			else if (item.file === true && item.obj_category === "video") {
+				let text = /[#|'"\[\]&<>]/g;
 				if (item.size < 1024 * 1024 * 5) continue;
 				item.stoken = this.shareTokenCache[shareData.shareId].stoken;
 				item.file_name = text.test(item.file_name) ? item.file_name.replace(text, "") : item.file_name;
@@ -120499,7 +120488,7 @@ var static_exports = /* @__PURE__ */ __exportAll({
 	merge: () => merge,
 	parseHTML: () => parseHTML,
 	root: () => root$1,
-	text: () => text$2,
+	text: () => text$1,
 	xml: () => xml
 });
 /**
@@ -120557,7 +120546,7 @@ function xml(dom) {
 * @param elements - Elements to render.
 * @returns The rendered document.
 */
-function text$2(elements) {
+function text$1(elements) {
 	const elems = elements !== null && elements !== void 0 ? elements : this ? this.root() : [];
 	let ret = "";
 	for (let i = 0; i < elems.length; i++) ret += textContent(elems[i]);
@@ -122430,7 +122419,7 @@ function getAttr(elem, name, xmlMode) {
 	(_a = elem.attribs) !== null && _a !== void 0 || (elem.attribs = {});
 	if (!name) return elem.attribs;
 	if (hasOwn(elem.attribs, name)) return !xmlMode && rboolean.test(name) ? name : elem.attribs[name];
-	if (elem.name === "option" && name === "value") return text$2(elem.children);
+	if (elem.name === "option" && name === "value") return text$1(elem.children);
 	if (elem.name === "input" && (elem.attribs["type"] === "radio" || elem.attribs["type"] === "checkbox") && name === "value") return "on";
 }
 /**
@@ -122640,7 +122629,7 @@ function val(value) {
 				for (const val of values) this.find(`option[value="${val}"]`).attr("selected", "");
 				return this;
 			}
-			return this.attr("multiple") ? option.toArray().map((el) => text$2(el.children)) : option.attr("value");
+			return this.attr("multiple") ? option.toArray().map((el) => text$1(el.children)) : option.attr("value");
 		}
 		case "button":
 		case "input":
@@ -125399,7 +125388,7 @@ var manipulation_exports = /* @__PURE__ */ __exportAll({
 	prependTo: () => prependTo,
 	remove: () => remove,
 	replaceWith: () => replaceWith,
-	text: () => text$1,
+	text: () => text,
 	toString: () => toString$2,
 	unwrap: () => unwrap,
 	wrap: () => wrap$1,
@@ -126069,9 +126058,9 @@ function html(str) {
 function toString$2() {
 	return this._render(this);
 }
-function text$1(str) {
-	if (str === void 0) return text$2(this);
-	if (typeof str === "function") return domEach(this, (el, i) => this._make(el).text(str.call(el, i, text$2([el]))));
+function text(str) {
+	if (str === void 0) return text$1(this);
+	if (typeof str === "function") return domEach(this, (el, i) => this._make(el).text(str.call(el, i, text$1([el]))));
 	return domEach(this, (el) => {
 		if (!hasChildren(el)) return;
 		for (const child of el.children) child.next = child.prev = child.parent = null;
@@ -393090,9 +393079,6 @@ async function init$2(filePath, env = {}, refresh) {
 		const moduleObject = rule;
 		moduleObject.cost = t2 - t1;
 		moduleObject.context = context;
-		delete sandbox._asyncGetRule;
-		delete sandbox.module;
-		delete sandbox.exports;
 		moduleCache$2.set(hashMd5, {
 			moduleObject,
 			hash: fileHash
@@ -393129,9 +393115,6 @@ async function getRuleObject(filePath, env, refresh) {
 		ruleObject.filterable = ruleObject.hasOwnProperty("filterable") ? Number(ruleObject.filterable) : 0;
 		ruleObject.quickSearch = ruleObject.hasOwnProperty("quickSearch") ? Number(ruleObject.quickSearch) : 0;
 		ruleObject.cost = t2 - t1;
-		delete sandbox._asyncGetRule;
-		delete sandbox.module;
-		delete sandbox.exports;
 		ruleObjectCache$1.set(filePath, {
 			ruleObject,
 			hash: fileHash
@@ -393172,9 +393155,6 @@ async function initJx(filePath, env, refresh) {
 		};
 		const cost = t2 - t1;
 		log(`[initJx] 加载解析:${filePath} 耗时 ${cost}毫秒`);
-		delete sandbox._asyncGetLazy;
-		delete sandbox.module;
-		delete sandbox.exports;
 		jxCache.set(hashMd5, {
 			jxObj,
 			hash: fileHash
