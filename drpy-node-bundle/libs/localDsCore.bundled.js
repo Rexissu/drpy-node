@@ -32,7 +32,7 @@ import process$1 from "node:process";
 import os from "node:os";
 import tty from "node:tty";
 import util$1 from "node:util";
-import { createRequire as createRequire$1 } from "module";
+import Module, { createRequire as createRequire$1 } from "module";
 import { setTimeout as setTimeout$1 } from "timers";
 import { pipeline } from "stream/promises";
 import diagnosticsChannel from "diagnostics_channel";
@@ -14367,7 +14367,7 @@ let debounceTimers = /* @__PURE__ */ new Map();
 function startJsonWatcher(ENGINES, jsonDir) {
 	if (process.env.NODE_ENV !== "development") return;
 	try {
-		watch(jsonDir, { recursive: true }, (eventType, filename) => {
+		jsonWatcher = watch(jsonDir, { recursive: true }, (eventType, filename) => {
 			if (filename && filename.endsWith(".json")) {
 				if (debounceTimers.has(filename)) clearTimeout(debounceTimers.get(filename));
 				const timer = setTimeout(() => {
@@ -14375,9 +14375,11 @@ function startJsonWatcher(ENGINES, jsonDir) {
 					ENGINES.drpyS.clearAllCache();
 					debounceTimers.delete(filename);
 				}, 100);
+				if (timer.unref) timer.unref();
 				debounceTimers.set(filename, timer);
 			}
 		});
+		if (jsonWatcher.unref) jsonWatcher.unref();
 	} catch (error) {
 		console.error("start json file listening failed with error:", error);
 	}
@@ -116423,11 +116425,688 @@ var YunDrive = class {
 };
 const Yun$1 = new YunDrive();
 //#endregion
+//#region ../utils/pan/xun.js
+var XunDriver = class {
+	constructor() {
+		this.regex = /https:\/\/pan.xunlei.com\/s\/(.*)\?.*?pwd=([^&]+)/;
+		this.headers = {
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+			"Connection": "keep-alive",
+			"Accept": "application/json, text/plain, */*",
+			"Accept-Encoding": "gzip, deflate, br",
+			"Accept-Language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6"
+		};
+		this.api = "https://xluser-ssl.xunlei.com/";
+		this.xun_api = "https://api-pan.xunlei.com/";
+		this.captcha_token = "";
+		this.parent_id = "";
+		this.share_id = "";
+		this.pass_code = "";
+		this.pass_code_token = "";
+		this.filename = "ds";
+		this.fileId = "";
+		this.vodID = "";
+		this.client_id = "XW5SkOhLDjnOZP7J";
+		this.x_client_id = "XW-G4v1H72tgfJym";
+		this.device_id = "652c6bb3cacdb4b80e852dfc3cb3cca4";
+		this.i = 0;
+	}
+	async init() {
+		if (this.auth) if (JSON.parse(import_crypto_js.default.enc.Base64.parse(this.auth.split(".")[1]).toString(import_crypto_js.default.enc.Utf8)).exp > Math.floor(Date.now() / 1e3)) console.log("登录成功");
+		else console.log("登录过期，重新登录");
+		else await this.getAuth();
+	}
+	get username() {
+		return ENV.get("xun_username");
+	}
+	get password() {
+		return ENV.get("xun_password");
+	}
+	get auth() {
+		return ENV.get("xun_auth");
+	}
+	get app_auth() {
+		return ENV.get("xun_app_auth");
+	}
+	get refresh_token() {
+		return ENV.get("xun_refresh_token");
+	}
+	get userId() {
+		return ENV.get("xun_user_id");
+	}
+	/**
+	* 延时函数
+	*
+	* 创建一个Promise，在指定毫秒数后resolve，用于控制请求频率。
+	*
+	* @param {number} ms - 延时毫秒数
+	* @returns {Promise<void>} 延时Promise
+	*
+	* @example
+	* await delay(1000); // 延时1秒
+	*/
+	delay(ms) {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
+	async execUrl(url) {
+		this.link = url;
+		const matches = this.regex.exec(url);
+		if (matches && matches[1]) {
+			this.share_id = matches[1];
+			this.pass_code = matches[2] || "";
+		}
+	}
+	async login() {
+		let data = JSON.stringify({
+			"protocolVersion": "301",
+			"sequenceNo": "1000001",
+			"platformVersion": "10",
+			"isCompressed": "0",
+			"appid": "40",
+			"clientVersion": "8.03.0.9067",
+			"peerID": "c9b076a446517969dff638cd37fa9ff1",
+			"appName": "ANDROID-com.xunlei.downloadprovider",
+			"sdkVersion": "231500",
+			"devicesign": "div101.b71a923eb0e2239842599a3c016b4098612f6cf6d6e9fd1925845ec59285716c",
+			"netWorkType": "2G",
+			"providerName": "NONE",
+			"deviceModel": "22021211RC",
+			"deviceName": "Xiaomi_22021211Rc",
+			"OSVersion": "12",
+			"creditkey": "",
+			"hl": "zh-CN",
+			"userName": this.username,
+			"passWord": this.password,
+			"verifyKey": "",
+			"verifyCode": "",
+			"isMd5Pwd": "0"
+		});
+		let config = {
+			method: "POST",
+			url: `${this.api}xluser.core.login/v3/login`,
+			headers: { "Content-Type": "application/json" },
+			data
+		};
+		let login_data = await axios$1.request(config);
+		if (login_data.status === 200) {
+			console.log("登录成功");
+			return login_data.data.sessionID;
+		}
+	}
+	async getSignCaptcha() {
+		let data = JSON.stringify({
+			"client_id": this.x_client_id,
+			"action": "POST:/v1/auth/signin",
+			"device_id": this.device_id,
+			"captcha_token": "",
+			"meta": { "phone_number": `+86 ${this.username}` }
+		});
+		let config = {
+			method: "POST",
+			url: `${this.api}v1/shield/captcha/init`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"Content-Type": "application/json"
+			},
+			data
+		};
+		let signin = await axios$1.request(config);
+		if (signin.status === 200) return signin.data.captcha_token;
+	}
+	async getAuth() {
+		let need_auth = 1;
+		if (this.auth) {
+			if (JSON.parse(import_crypto_js.default.enc.Base64.parse(this.auth.split(".")[1]).toString(import_crypto_js.default.enc.Utf8)).exp > Math.floor(Date.now() / 1e3)) {
+				console.log("登录成功");
+				need_auth = 0;
+			}
+		}
+		if (need_auth) {
+			console.log("登录过期，重新登录");
+			let captcha_token = await this.getSignCaptcha();
+			let data = JSON.stringify({
+				"username": `+86 ${this.username}`,
+				"password": this.password,
+				"client_id": this.x_client_id
+			});
+			let config = {
+				method: "POST",
+				url: `${this.api}v1/auth/signin`,
+				headers: {
+					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+					"Content-Type": "application/json",
+					"accept-language": "zh-cn",
+					"x-captcha-token": captcha_token,
+					"x-client-id": this.x_client_id,
+					"x-device-id": this.device_id
+				},
+				data
+			};
+			let auth_data = await axios$1.request(config);
+			if (auth_data.status === 200) {
+				ENV.set("xun_auth", auth_data.data.token_type + " " + auth_data.data.access_token);
+				ENV.set("xun_user_id", auth_data.data.user_id);
+			}
+			await this.safecaptcha();
+		}
+	}
+	async safecaptcha() {
+		let data = JSON.stringify({
+			"client_id": this.x_client_id,
+			"action": "get:/drive/v1/privilege/USER_SECURITY_TOKEN",
+			"device_id": this.device_id,
+			"captcha_token": "",
+			"meta": {
+				"username": "",
+				"phone_number": "",
+				"email": "",
+				"package_name": "pan.xunlei.com",
+				"client_version": "1.92.9",
+				"captcha_sign": "1.98cda33124387df2c03dea12799af2af",
+				"timestamp": "1757397551603",
+				"user_id": this.userId
+			}
+		});
+		let config = {
+			method: "POST",
+			url: "https://xluser-ssl.xunlei.com/v1/shield/captcha/init",
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"Content-Type": "application/json",
+				"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"content-type": "text/plain;charset=UTF-8"
+			},
+			data
+		};
+		let captcha_token = (await axios$1.request(config)).data.captcha_token;
+		let safe_data = (await axios$1({
+			method: "GET",
+			url: "https://api-pan.xunlei.com/drive/v1/privilege/USER_SECURITY_TOKEN",
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"authorization": this.auth,
+				"content-type": "application/json",
+				"x-captcha-token": captcha_token,
+				"x-client-id": this.x_client_id,
+				"x-device-id": this.device_id
+			}
+		})).data;
+	}
+	async getCaptcha_token(path, mth) {
+		let action = `${mth}:${path}`;
+		let data = JSON.stringify({
+			"client_id": "Xqp0kJBXWhwaTpB6",
+			"action": action,
+			"device_id": "1bf91caf40093318e8040916eb7ad16a",
+			"captcha_token": "",
+			"meta": {
+				"username": "",
+				"phone_number": "",
+				"email": "",
+				"package_name": "pan.xunlei.com",
+				"client_version": "1.92.9",
+				"captcha_sign": "1.cbc20fd633c54023baab5b816228bf90",
+				"timestamp": "1757383155459",
+				"user_id": this.userId
+			}
+		});
+		let config = {
+			method: "POST",
+			url: `${this.api}v1/shield/captcha/init`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"Content-Type": "application/json"
+			},
+			data
+		};
+		let captcha_data = await axios$1.request(config);
+		if (captcha_data.status === 200) return captcha_data.data.captcha_token;
+	}
+	async getAppCaptcha_token(path, mth) {
+		let action = `${mth}:${path}`;
+		let data = JSON.stringify({
+			"client_id": "XW-G4v1H72tgfJym",
+			"action": action,
+			"device_id": "652c6bb3cacdb4b80e852dfc3cb3cca4",
+			"captcha_token": "",
+			"meta": {
+				"package_name": "ThunderPanPlugin",
+				"client_version": "3.1.5",
+				"captcha_sign": "1.ee2cef5f061a7cdf4374df81b370d2ec",
+				"timestamp": "1773293019719",
+				"user_id": this.userId
+			}
+		});
+		let config = {
+			method: "POST",
+			url: `${this.api}v1/shield/captcha/init`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"Content-Type": "application/json"
+			},
+			data
+		};
+		let captcha_data = await axios$1.request(config);
+		if (captcha_data.status === 200) return captcha_data.data.captcha_token;
+	}
+	sign() {
+		let x = [
+			"QG3/GhopO+5+T",
+			"1Sv94+ANND3lDmmw",
+			"q2eTxRva8b3B5d",
+			"m2",
+			"VIc5CZRBMU71ENfbOh0+RgWIuzLy",
+			"66M8Wpw6nkBEekOtL6e",
+			"N0rucK7S8W/vrRkfPto5urIJJS8dVY0S",
+			"oLAR7pdUVUAp9xcuHWzrU057aUhdCJrt",
+			"6lxcykBSsfI//GR9",
+			"r50cz+1I4gbU/fk8",
+			"tdwzrTc4SNFC4marNGTgf05flC85A",
+			"qvNVUDFjfsOMqvdi2gB8gCvtaJAIqxXs"
+		];
+		const c = {
+			ClientID: "Xqp0kJBXWhwaTpB6",
+			ClientVersion: "1.92.9",
+			PackageName: "pan.xunlei.com",
+			DeviceID: "1bf91caf40093318e8040916eb7ad16a"
+		};
+		const timestamp = Date.now();
+		let w = c.ClientID + c.ClientVersion + c.PackageName + c.DeviceID + "1757338961011";
+		for (let i = 0; i < x.length; i++) w = import_crypto_js.default.MD5(w + x[i]).toString();
+		return "1." + w;
+	}
+	async getShareList() {
+		let captcha_data = await this.getCaptcha_token("/drive/v1/share", "get");
+		let config = {
+			method: "GET",
+			url: `${this.xun_api}drive/v1/share?share_id=${this.share_id}&pass_code=${this.pass_code}&limit=100&page_token=&thumbnail_size=SIZE_SMALL`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"authorization": "",
+				"x-captcha-token": captcha_data,
+				"x-client-id": "Xqp0kJBXWhwaTpB6",
+				"x-device-id": "1bf91caf40093318e8040916eb7ad16a"
+			}
+		};
+		let sharelist = await axios$1.request(config);
+		if (sharelist.status === 200) {
+			let file = {};
+			let dirs = [];
+			let videos = [];
+			this.pass_code_token = sharelist.data.pass_code_token;
+			sharelist.data.files.map((it) => {
+				if (it.mime_type === "") dirs.push(it.id);
+				else {
+					let text = /[#|'"\[\]&<>]/g;
+					let name = text.test(it.name) ? it.name.replace(text, "") : it.name;
+					videos.push({
+						name,
+						fileId: it.id,
+						share_id: this.share_id,
+						parent_id: it.parent_id,
+						pass_code_token: encodeURIComponent(this.pass_code_token)
+					});
+				}
+			});
+			if (!(sharelist.data.title in file) && sharelist.data.title !== void 0) file[sharelist.data.title] = [];
+			if (videos.length > 0 && sharelist.data.title !== void 0) file[sharelist.data.title] = [...videos];
+			let result = await Promise.all(dirs.map(async (id) => this.getShareDetail(id)));
+			result = result.filter((item) => item !== void 0 && item !== null).flat();
+			if (result.length >= 0) file[sharelist.data.title].push(...result);
+			return file;
+		}
+	}
+	async getShareDetail(id) {
+		let captcha_data = await this.getCaptcha_token("/drive/v1/share", "get");
+		let config = {
+			method: "GET",
+			url: `${this.xun_api}drive/v1/share/detail?share_id=${this.share_id}&parent_id=${id}&pass_code_token=${encodeURIComponent(this.pass_code_token)}&limit=100&page_token=&thumbnail_size=SIZE_SMALL`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"authorization": "",
+				"content-type": "application/json",
+				"x-captcha-token": captcha_data,
+				"x-client-id": "Xqp0kJBXWhwaTpB6",
+				"x-device-id": "1bf91caf40093318e8040916eb7ad16a"
+			}
+		};
+		let detail_data = await axios$1.request(config);
+		if (detail_data.status === 200) {
+			let dirs = [];
+			let videos = [];
+			detail_data.data.files.map((it) => {
+				if (it.mime_type === "") dirs.push(it.id);
+				else {
+					let text = /[#|'"\[\]&<>]/g;
+					let name = text.test(it.name) ? it.name.replace(text, "") : it.name;
+					videos.push({
+						name,
+						fileId: it.id,
+						share_id: this.share_id,
+						parent_id: it.parent_id,
+						pass_code_token: encodeURIComponent(this.pass_code_token)
+					});
+				}
+			});
+			let result = await Promise.all(dirs.map(async (id) => this.getShareDetail(id)));
+			result = result.filter((item) => item !== void 0 && item !== null);
+			return [...videos, ...result.flat()];
+		}
+	}
+	async getShareUrl(fileId, share_id, pass_code_token) {
+		let captcha_data = await this.getCaptcha_token("/drive/v1/share", "get");
+		let config = {
+			method: "GET",
+			url: `${this.xun_api}drive/v1/share/file_info?pass_code_token=${encodeURIComponent(pass_code_token)}&space=&file_id=${fileId}&share_id=${share_id}&&pass_code=${this.pass_code}`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"authorization": "",
+				"cache-control": "no-cache",
+				"content-type": "application/json",
+				"x-captcha-token": captcha_data,
+				"x-client-id": "Xqp0kJBXWhwaTpB6",
+				"x-device-id": "1bf91caf40093318e8040916eb7ad16a"
+			}
+		};
+		let url_list = await axios$1.request(config);
+		if (url_list.status === 200) {
+			let urls = [];
+			url_list.data.file_info.medias.map((it) => {
+				if (it.link !== null) {
+					urls.push(it.media_name, it.link.url + "#isVideo=true##fastPlayMode##threads=20#");
+					urls.push("猫画" + it.media_name, `http://127.0.0.1:5575/proxy?thread=${ENV.get("thread") || 6}&chunkSize=256&url=` + encodeURIComponent(it.link.url));
+				}
+			});
+			return urls;
+		}
+	}
+	async getShareData(url) {
+		if (url.startsWith("https://")) {
+			await this.execUrl(url);
+			return await this.getShareList();
+		}
+	}
+	async saveResult(fileId, share_id, pass_code_token) {
+		let captcha_data = await this.getAppCaptcha_token("drive/v1/files", "get");
+		let data = JSON.stringify({
+			"parent_id": this.fileId,
+			"share_id": share_id,
+			"pass_code_token": decodeURIComponent(pass_code_token),
+			"ancestor_ids": [],
+			"file_ids": [fileId],
+			"specify_parent_id": true
+		});
+		let config = {
+			method: "POST",
+			url: `${this.xun_api}drive/v1/share/restore`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"Content-Type": "application/json",
+				"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"authorization": this.auth,
+				"x-captcha-token": captcha_data,
+				"x-client-id": "XW-G4v1H72tgfJym",
+				"x-device-id": "652c6bb3cacdb4b80e852dfc3cb3cca4"
+			},
+			data
+		};
+		let file_data = await axios$1.request(config).catch((e) => e.response);
+		if (file_data.status === 200) console.log("转存文件成功");
+		if (file_data.status === 404) {
+			this.i++;
+			if (this.i < 3) await this.saveResult(fileId, share_id, pass_code_token);
+			else {
+				this.i = 0;
+				console.log("转存失败:" + file_data.data);
+			}
+		}
+	}
+	async saveFile(fileId, share_id, pass_code_token) {
+		await this.createFile();
+		if (this.fileId !== "" && this.fileId !== void 0) {
+			await this.delay(5e3);
+			await this.saveResult(fileId, share_id, pass_code_token);
+		}
+	}
+	async getFile() {
+		if (this.auth === void 0 || this.auth === "") await this.getAuth();
+		let captcha_data = await this.getAppCaptcha_token("drive/v1/files", "get");
+		let config = {
+			method: "GET",
+			url: `${this.xun_api}drive/v1/files?parent_id=&filters=%7B%22phase%22%3A%7B%22eq%22%3A%22PHASE_TYPE_COMPLETE%22%7D%2C%22trashed%22%3A%7B%22eq%22%3Afalse%7D%7D&with_audit=true&thumbnail_size=SIZE_SMALL&limit=50`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"authorization": this.auth,
+				"content-type": "application/json",
+				"x-captcha-token": captcha_data,
+				"x-client-id": "XW-G4v1H72tgfJym",
+				"x-device-id": "652c6bb3cacdb4b80e852dfc3cb3cca4"
+			}
+		};
+		let file_data = await axios$1.request(config);
+		if (file_data.status === 200) file_data.data.files.map((it) => {
+			if (it.name === this.filename) this.fileId = it.id;
+		});
+	}
+	async createFile() {
+		await this.getFile();
+		let captcha_data = await this.getAppCaptcha_token("drive/v1/files", "get");
+		let data = JSON.stringify({
+			"parent_id": "",
+			"name": this.filename,
+			"kind": "drive#folder",
+			"space": ""
+		});
+		let config = {
+			method: "POST",
+			url: `${this.xun_api}drive/v1/files`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"Content-Type": "application/json",
+				"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"authorization": this.auth,
+				"x-captcha-token": captcha_data,
+				"x-client-id": "XW-G4v1H72tgfJym",
+				"x-device-id": "652c6bb3cacdb4b80e852dfc3cb3cca4"
+			},
+			data
+		};
+		let file_data = await axios$1.request(config).catch((e) => e.response);
+		if (file_data.status === 200) this.fileId = file_data.data.file.id;
+	}
+	async getVodId() {
+		let captcha_data = await this.getAppCaptcha_token("drive/v1/files", "get");
+		let config = {
+			method: "GET",
+			url: `${this.xun_api}drive/v1/files?parent_id=${this.fileId}&filters=%7B%22phase%22%3A%7B%22eq%22%3A%22PHASE_TYPE_COMPLETE%22%7D%2C%22trashed%22%3A%7B%22eq%22%3Afalse%7D%7D&with_audit=true&thumbnail_size=SIZE_SMALL&limit=50`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+				"authorization": this.auth,
+				"content-type": "application/json",
+				"x-captcha-token": captcha_data,
+				"x-client-id": "XW-G4v1H72tgfJym",
+				"x-device-id": "652c6bb3cacdb4b80e852dfc3cb3cca4"
+			}
+		};
+		let file_data = await axios$1.request(config);
+		if (file_data.status === 200) file_data.data.files.map((it) => {
+			this.vodID = it.id;
+		});
+		return this.vodID;
+	}
+	async deleteFile() {
+		await this.getFile();
+		if (this.fileId !== "" && this.fileId !== void 0) {
+			let captcha_data = await this.getAppCaptcha_token("drive/v1/files", "get");
+			let data = JSON.stringify({
+				"ids": [this.fileId],
+				"space": ""
+			});
+			let config = {
+				method: "POST",
+				url: `${this.xun_api}drive/v1/files:batchDelete`,
+				headers: {
+					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+					"Content-Type": "application/json",
+					"accept-language": "zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6",
+					"authorization": this.auth,
+					"x-captcha-token": captcha_data,
+					"x-client-id": "XW-G4v1H72tgfJym",
+					"x-device-id": "652c6bb3cacdb4b80e852dfc3cb3cca4"
+				},
+				data
+			};
+			let delete_data = await axios$1.request(config).catch((e) => e.response);
+			if (delete_data.status === 200) console.log("删除文件成功");
+			else if (delete_data.status === 404) console.log("文件未找到，删除失败");
+		}
+	}
+	async getDownload_CAPTCHA_TOKEN() {
+		let data = {
+			"client_id": "XW-G4v1H72tgfJym",
+			"action": "GET:CAPTCHA_TOKEN",
+			"device_id": "652c6bb3cacdb4b80e852dfc3cb3cca4",
+			"captcha_token": "",
+			"meta": {
+				"package_name": "ThunderPanPlugin",
+				"client_version": "3.1.1",
+				"captcha_sign": "1.0eada0deeeaac52a6376f2e167fa9f29",
+				"timestamp": "1757378771289",
+				"user_id": this.userId
+			}
+		};
+		let config = {
+			method: "POST",
+			url: `${this.api}v1/shield/captcha/init`,
+			headers: {
+				"User-Agent": "thunder/12.4.4.3740 Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.5359.215 XDASKernel/22.3.27 Safari/537.36",
+				"Accept-Encoding": "gzip, deflate, br",
+				"Content-Type": "application/json"
+			},
+			data
+		};
+		let captcha_data = await axios$1.request(config);
+		if (captcha_data.status === 200) return captcha_data.data.captcha_token;
+	}
+	async getAppCaptcha() {
+		let data = JSON.stringify({
+			"client_id": "Xqp0kJBXWhwaTpB6",
+			"action": "POST:/v1/auth/signin",
+			"device_id": "652c6bb3cacdb4b80e852dfc3cb3cca4",
+			"captcha_token": "",
+			"meta": { "phone_number": `+86 ${this.username}` }
+		});
+		let config = {
+			method: "POST",
+			url: `${this.api}v1/shield/captcha/init`,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+				"Content-Type": "application/json"
+			},
+			data
+		};
+		let signin = await axios$1.request(config);
+		if (signin.status === 200) return signin.data.captcha_token;
+	}
+	async AppAuth() {
+		if (this.app_auth) if (JSON.parse(import_crypto_js.default.enc.Base64.parse(this.app_auth.split(".")[1]).toString(import_crypto_js.default.enc.Utf8)).exp > Math.floor(Date.now() / 1e3)) console.log("登录成功");
+		else {
+			console.log("登录过期，重新登录");
+			let captcha_token = await this.getAppCaptcha();
+			let data = JSON.stringify({
+				"username": `+86 ${this.username}`,
+				"password": this.password,
+				"client_id": "XW-G4v1H72tgfJym"
+			});
+			let config = {
+				method: "POST",
+				url: `${this.api}v1/auth/signin`,
+				headers: {
+					"User-Agent": "thunder/12.4.4.3740 Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.5359.215 XDASKernel/22.3.27 Safari/537.36",
+					"Content-Type": "application/json",
+					"x-captcha-token": captcha_token,
+					"x-client-id": "XW-G4v1H72tgfJym",
+					"x-device-id": "652c6bb3cacdb4b80e852dfc3cb3cca4"
+				},
+				data
+			};
+			let auth_data = await axios$1.request(config);
+			if (auth_data.status === 200) {
+				ENV.set("xun_refresh_token", auth_data.data.refresh_token);
+				ENV.set("xun_app_auth", auth_data.data.token_type + " " + auth_data.data.access_token);
+			}
+		}
+	}
+	async getDownload_auth() {
+		await this.AppAuth();
+		let data = JSON.stringify({
+			"client_id": "XW-G4v1H72tgfJym",
+			"client_secret": "Qbaferw2knfQKqxa25EYJGtZ2_6755CMwzXBN3ctW54",
+			"grant_type": "refresh_token",
+			"refresh_token": this.refresh_token
+		});
+		let dwon_data = await axios$1({
+			method: "POST",
+			url: "https://xluser-ssl.xunlei.com/v1/auth/token",
+			headers: {
+				"User-Agent": "thunder/12.4.4.3740 Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.5359.215 XDASKernel/22.3.27 Safari/537.36",
+				"Content-Type": "application/json",
+				"x-client-id": "XW-G4v1H72tgfJym",
+				"x-device-id": "652c6bb3cacdb4b80e852dfc3cb3cca4"
+			},
+			data
+		}).catch((e) => e.response);
+		if (dwon_data.status === 200) {
+			ENV.set("xun_retoken", dwon_data.data.refresh_token);
+			ENV.set("xun_App_auth", dwon_data.data.token_type + " " + dwon_data.data.access_token);
+		}
+	}
+	async getDownloadUrl(fileId, share_id, pass_code_token) {
+		try {
+			await this.getDownload_auth();
+			await this.deleteFile();
+			await this.delay(1e3);
+			await this.saveFile(fileId, share_id, pass_code_token);
+			let vodID = await this.getVodId();
+			let x_captcha_token = await this.getDownload_CAPTCHA_TOKEN();
+			let config = {
+				method: "GET",
+				url: `${this.xun_api}drive/v1/files/${vodID}?space=&with[0]=public_share_tag&usage=FETCH`,
+				headers: {
+					"User-Agent": "thunder/12.4.4.3740 Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.5359.215 XDASKernel/22.3.27 Safari/537.36",
+					"Connection": "keep-alive",
+					"Accept": "*/*",
+					"Accept-Encoding": "gzip, deflate, br",
+					"x-captcha-token": x_captcha_token,
+					"authorization": this.app_auth,
+					"content-type": "application/json",
+					"x-device-id": "652c6bb3cacdb4b80e852dfc3cb3cca4"
+				}
+			};
+			let file_data = await axios$1.request(config);
+			if (file_data.status === 200) {
+				console.log("下载地址：" + file_data.data.links["application/octet-stream"].url || file_data.data["web_content_link"]);
+				return file_data.data.links["application/octet-stream"].url || file_data.data["web_content_link"];
+			}
+		} catch (e) {
+			console.log(e);
+			return "";
+		}
+	}
+};
+const Xun$1 = new XunDriver();
+//#endregion
 //#region ../utils/pans.js
 /**
 * 网盘服务模块集合
 * 统一导入和导出各种网盘服务提供商的实现
-* 
+*
 * 支持的网盘服务：
 * - Ali: 阿里云盘服务
 * - Baidu: 百度网盘服务
@@ -116437,7 +117116,7 @@ const Yun$1 = new YunDrive();
 * - Quark: 夸克网盘服务
 * - UC: UC网盘服务
 * - Yun: 115网盘服务
-* 
+*
 * @example
 * import pans from './pans.js';
 * const aliPan = new pans.Ali(config);
@@ -116451,7 +117130,8 @@ var pans_default = {
 	Pan: Pan$1,
 	Quark: Quark$1,
 	UC: UC$1,
-	Yun: Yun$1
+	Yun: Yun$1,
+	Xun: Xun$1
 };
 //#endregion
 //#region ../node_modules/cheerio/dist/esm/options.js
@@ -374920,6 +375600,20 @@ const __dirname$4 = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname$4, "../");
 const LIB_ROOT = path.join(ROOT_DIR, "spider/js");
 const customRequire = createRequire$1(import.meta.url);
+/**
+* Patch Module.prototype.require to handle bundled modules in CJS context
+* This allows native CJS modules (like those loaded via require('./lib.js')) to find
+* bundled dependencies (axios, iconv-lite, etc.) which are exposed on globalThis.
+*/
+const originalRequire = Module.prototype.require;
+Module.prototype.require = function(id) {
+	if (id === "iconv-lite" && globalThis.iconv) return globalThis.iconv;
+	if (id === "axios" && globalThis.axios) return globalThis.axios;
+	if (id === "cheerio" && globalThis.cheerio) return globalThis.cheerio;
+	if (id === "qs" && globalThis.qs) return globalThis.qs;
+	if (id === "crypto-js" && globalThis.CryptoJS) return globalThis.CryptoJS;
+	return originalRequire.apply(this, arguments);
+};
 const rootRequire = (modulePath) => {
 	if (modulePath === "iconv-lite") return globalThis.iconv;
 	if (modulePath === "axios") return globalThis.axios;
@@ -392683,7 +393377,7 @@ globalThis._fetch = fetch;
 globalThis.JsonBig = (0, import_json_bigint.default)({ storeAsString: true });
 globalThis.require = rootRequire;
 initializeGlobalDollar();
-const { Ali, Baidu, Baidu2, Cloud, Pan, Quark, UC, Yun } = pans_default;
+const { Ali, Baidu, Baidu2, Cloud, Pan, Quark, UC, Yun, Xun } = pans_default;
 const { sleep, sleepSync, getNowTime, computeHash, deepCopy, urljoin: urljoin$1, urljoin2, joinUrl, keysToLowerCase, naturalSort, $js, createBasicAuthHeaders, get_size } = utils_exports$1;
 const CACHE_OPTIONS = {
 	max: 100,
@@ -392883,6 +393577,7 @@ const STATIC_LIBS_SANDBOX = {
 	Cloud,
 	Yun,
 	Pan,
+	Xun,
 	createWebDAVClient,
 	createFTPClient,
 	require: rootRequire,
@@ -393934,6 +394629,11 @@ var catvod_default = {
 };
 //#endregion
 //#region localDsCore.js
+const ENGINES = {
+	drpyS: drpyS_exports,
+	php: php_default,
+	catvod: catvod_default
+};
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
 const isBundled = __dirname$1.endsWith("dist") || __dirname$1.endsWith("libs") || __dirname$1.endsWith("dist" + path.sep) || __dirname$1.endsWith("libs" + path.sep);
 const possibleRoots = [
@@ -393962,15 +394662,7 @@ const options = {
 	catDir,
 	catLibDir
 };
-/**
-* 支持的引擎映射表
-* 包含drpyS、php、catvod
-*/
-const ENGINES = {
-	drpyS: drpyS_exports,
-	php: php_default,
-	catvod: catvod_default
-};
+startJsonWatcher(ENGINES, jsonDir);
 /**
 * 创建带超时的Promise包装函数
 * 为API操作添加超时控制，防止长时间阻塞
@@ -393987,9 +394679,10 @@ function withTimeout(promise, timeoutMs = null, operation = "API操作", invokeM
 	else defaultTimeout = 20 * 1e3;
 	const actualTimeout = timeoutMs || defaultTimeout;
 	return Promise.race([promise, new Promise((_, reject) => {
-		setTimeout(() => {
+		const timer = setTimeout(() => {
 			reject(/* @__PURE__ */ new Error(`${operation}超时 (${actualTimeout}ms)`));
 		}, actualTimeout);
+		if (timer.unref) timer.unref();
 	})]);
 }
 async function getEngine(moduleName, query, inject_env) {
