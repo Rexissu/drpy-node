@@ -117106,7 +117106,7 @@ const Xun$1 = new XunDriver();
 /**
 * 网盘服务模块集合
 * 统一导入和导出各种网盘服务提供商的实现
-*
+* 
 * 支持的网盘服务：
 * - Ali: 阿里云盘服务
 * - Baidu: 百度网盘服务
@@ -117116,7 +117116,7 @@ const Xun$1 = new XunDriver();
 * - Quark: 夸克网盘服务
 * - UC: UC网盘服务
 * - Yun: 115网盘服务
-*
+* 
 * @example
 * import pans from './pans.js';
 * const aliPan = new pans.Ali(config);
@@ -383621,6 +383621,52 @@ var FileHeaderManager = class {
 		}
 	};
 	/**
+	* Find the @header(...) block in the comment text
+	* @param {string} text Comment text
+	* @param {string} ext File extension (.js or .py)
+	* @returns {Object|null} { start, end, content }
+	*/
+	static findHeaderBlock(text, ext) {
+		const startIndex = text.indexOf("@header(");
+		if (startIndex === -1) return null;
+		let index = startIndex + 8;
+		let balance = 1;
+		let inString = false;
+		let stringChar = "";
+		let escape = false;
+		let inLineComment = false;
+		for (; index < text.length; index++) {
+			const char = text[index];
+			if (inLineComment) {
+				if (char === "\n") inLineComment = false;
+				continue;
+			}
+			if (inString) {
+				if (escape) escape = false;
+				else if (char === "\\") escape = true;
+				else if (char === stringChar) inString = false;
+				continue;
+			}
+			if (char === "/" && text[index + 1] === "/") {
+				inLineComment = true;
+				index++;
+			} else if (ext === ".py" && char === "#") inLineComment = true;
+			else if (char === "\"" || char === "'") {
+				inString = true;
+				stringChar = char;
+			} else if (char === "(") balance++;
+			else if (char === ")") {
+				balance--;
+				if (balance === 0) return {
+					start: startIndex,
+					end: index + 1,
+					content: text.substring(startIndex + 8, index)
+				};
+			}
+		}
+		return null;
+	}
+	/**
 	* 解析JavaScript对象字面量（支持无引号属性名）
 	* @param {string} str 对象字符串
 	* @returns {Object} 解析后的对象
@@ -383649,10 +383695,10 @@ var FileHeaderManager = class {
 		if (!config) throw new Error(`Unsupported file type: ${ext}`);
 		const match = content.match(config.regex);
 		if (!match) return null;
-		const headerMatch = match[0].match(config.headerRegex);
-		if (!headerMatch) return null;
+		const headerBlock = this.findHeaderBlock(match[0], ext);
+		if (!headerBlock) return null;
 		try {
-			return this.parseObjectLiteral(headerMatch[1].trim());
+			return this.parseObjectLiteral(headerBlock.content.trim());
 		} catch {
 			return null;
 		}
@@ -383715,12 +383761,15 @@ var FileHeaderManager = class {
 			const commentStartIndex = content.indexOf(fullComment);
 			const commentEndIndex = commentStartIndex + fullComment.length;
 			if (content.substring(0, commentStartIndex).trim() !== "") newContent = config.createComment(headerStr) + "\n\n" + content;
-			else if (config.headerRegex.test(fullComment)) {
-				const updatedComment = fullComment.replace(config.headerRegex, headerStr);
-				newContent = content.substring(0, commentStartIndex) + updatedComment + content.substring(commentEndIndex);
-			} else {
-				const updatedComment = fullComment.replace(config.end, "").trim() + `\n${headerStr}\n${config.end}`;
-				newContent = content.substring(0, commentStartIndex) + updatedComment + content.substring(commentEndIndex);
+			else {
+				const headerBlock = this.findHeaderBlock(fullComment, ext);
+				if (headerBlock) {
+					const updatedComment = fullComment.substring(0, headerBlock.start) + headerStr + fullComment.substring(headerBlock.end);
+					newContent = content.substring(0, commentStartIndex) + updatedComment + content.substring(commentEndIndex);
+				} else {
+					const updatedComment = fullComment.replace(config.end, "").trim() + `\n${headerStr}\n${config.end}`;
+					newContent = content.substring(0, commentStartIndex) + updatedComment + content.substring(commentEndIndex);
+				}
 			}
 		} else newContent = config.createComment(headerStr) + "\n\n" + content;
 		if (!newContent.replace(config.regex, "").trim()) throw new Error("写入失败：内容不能只包含文件头而无原始内容");
@@ -383788,13 +383837,13 @@ var FileHeaderManager = class {
 		}
 		const match = content.match(config.regex);
 		if (!match) return content.trim();
-		let [fullComment, innerContent] = match;
-		if (config.headerRegex.test(innerContent)) {
-			innerContent = innerContent.replace(config.headerRegex, "");
-			const cleanedInner = innerContent.split("\n").filter((line) => line.trim().length > 0).join("\n");
+		let [fullComment] = match;
+		const headerBlock = this.findHeaderBlock(fullComment, ext);
+		if (headerBlock) {
+			let cleanedInner = (fullComment.substring(0, headerBlock.start) + fullComment.substring(headerBlock.end)).replace(config.start, "").replace(config.end, "").split("\n").filter((line) => line.trim().length > 0).join("\n");
 			if (!cleanedInner.trim()) content = content.replace(fullComment, "");
 			else {
-				const newComment = `${config.start}${cleanedInner}${config.end}`;
+				const newComment = `${config.start}\n${cleanedInner}\n${config.end}`;
 				content = content.replace(fullComment, newComment);
 			}
 		}
