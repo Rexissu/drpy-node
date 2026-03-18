@@ -115060,7 +115060,7 @@ var QuarkHandler = class {
 				"sec-ch-ua-mobile": "?0",
 				"sec-ch-ua-platform": "\"Windows\"",
 				"referer": "https://pan.quark.cn/",
-				"Cookie": "_UP_A4A_11_=wb9ce1f8a7f74209b248cb5877a6a876; _UP_D_=pc; tfstk=gy2rZY6dQTBPmYbgblDFQOhX71M-pv7_ZJgIxkqnV40oVYZ3gkZN2Da7x2PEoyIJFYbJK2qTkbguRYTFLrko97gIP2kUvPSf5O6_2uHKEN_1C6GsZ4kK-9MhGxcbeD-R5O6_quHKKN__NjmeBVnnK0co-Ejq2qmoxy0oiEmZXv03-yj4mqnnK24nKirmkDDn-ycsi2063cllqNA0iO9nAbugqqJU2-ooaQEoupv33dGrSyg2Kp2q2kJ_DBpNOVVtPfguot9rLomUufNP7LzUxlFngJ8lVP40TymYMwRE7Wq76-GXxG0geo2tnj6Gbo2YPue4AHXncPg028DFIGHrE4DqDJ_vE2P0t8G-pUbEJ-r0EWSz_enc4z2LaeAEZmnq5iSVbveZi_88v3Rp9bFx0VsR2BdKZmnq5iS29BhoDmu10i5..; __uid=AARfyLe8Bke3UGL2FjhvNQn6; __sdid=AATHIp7rA8mvfKhhMvPnt0milUEzXi1ReJN0CjChc4LeUA6qYUdYA32jmaL/Lk2AA4s=; __pus=bd604e2725229c945e994c227de77f1cAASVpc7pXsTooap3JBI0XiJI9JU/JUngO9SJCOIRNOLXngLdOfozAiiwF9CnY/xOiEgE8NvKDDg1ZAwX7nVqe9H2ib5aMTAi+a2DfaPE6/6Won1vUOAfKCNELRmJOeYhVn3/eQUYx6B9EIw9HCYjQoKVh76daPI2lnp3QBTK/5zWGya9rVul08y86xpY3APre7I=; __kp=eb241d80-1ee6-11f1-85bf-6167dfcf1acd; __kuus=NenaSYNIw/O9SzABV2HtnjTDoH5aJthk7nOgDdt9pHeaJmMkCD/TY+jVFIrCn+WeFaQVR9h+E/YoStTBZAtB9va0ghzlZCgNuddki8Z8WOnYug==; __puus=2baf96cce907422be5e242bb1d280977AATi54Q/fKnsA5nM/iG/TZHL12hYZj/ELuUFbEwO/2jIXaSGwmvXppDKCITu73rdsZ1hRR0cY2QRpWdM0o+nFv65fCf5ZwPIaGHvUK9BOg3653jTngpTAj41u8kq5vTIDnPDPGWlYPYiUehDbyYBwxKYl12BFSjonkfKybr3Fpc2TYQcm566OQTrPzsupcOkOoa8CQllYvsoVyEBF2ZpiX/5"
+				"Cookie": this.cookie
 			},
 			data
 		};
@@ -115087,7 +115087,7 @@ var QuarkHandler = class {
 				"Accept": "*/*,application/json;charset=utf-8",
 				"Accept-Encoding": "gzip, deflate, br, zstd",
 				"Content-Type": "application/json",
-				"Cookie": "b-user-id=7a421e0c-2ff4-1251-4069-cdfbfedcaf8d; _UP_A4A_11_=wb9cf15ce78d47ed921a9fab3faa85e8; xlly_s=1; __sdid=AAQCvlprpJtHMDSTmliW7CTXaxFJONVhZZyKc8NgJ6Y+XH4iO1v3Q8gYFeEi2hqeV4U=; _UP_D_=pc; __pus=97012d074b8d70d6eeaeb7dbe3fcb05dAAQB4QUahCaghYFA9y/NYud63QbrjWpcO/mp4OgGcA2UZ5O+VMUlfCpacaDzbRBV2O/DK9y9iAFBUL7iPmzdj2d9; __kp=ea759a90-1ed1-11f1-8f67-e7e56f2ee996; __kps=AARfyLe8Bke3UGL2FjhvNQn6; __ktd=axb8KS+96BcSmmEd+gddqg==; __uid=AARfyLe8Bke3UGL2FjhvNQn6; __puus=c6ca8123ab4024f139092c58678de061AATi54Q/fKnsA5nM/iG/TZHLzf8buD1i2D3OKKcgKFxmYvTq9ypLK3mbAQlXFlJz6zEGV7aROE4eXsRbMGviOH4EpwIMv8HZ3UUDPfRoIVsx+mV9xMqXujCxpQR96l9Alpe2B15pFBZl94/lBMSORn+M/cocX9mAe2wX82JvYhQYO46JRC1evvevyyyzaai9ItKcf72BRC6QzioBIic/XHI8; isg=BDg4TjMppS-k-Mk0_qdGtZTlCebKoZwrBz4YK3KgQXMmjdJ3GrWXu63lQY093VQD; tfstk=gTJiuT2wCC5_fZaEErWsOziN8jlKBO6X3EeAktQqTw7Ckctv0ty2knBOgVtv-Z7F2SJA0f_cTUs7_CCZSemDWnwA7NpAns8RR5Rx5qtFmULRuiSqcMkeuUYcGc_AuZYv0CnKeYK6ft62o4H-emTk0mLcbsyaLmScDPod_tj5i4Wqy4HL9k5sWt-TUIxGLH7CmiyNuEWULi7Ubl8V76zFqg6VuE8VTWSRcGPN7N-UTwsV3Z8V3DXFRiXVuEWqxHllpf763pJErkLuNeO_cCsGsa-N7nKvLPWT1nQ33-JHt1brQw243pjM09gPi8cAzQ_Owa8EpRXDYiYhwC0uIEx2VI5HnPo9zeRDuMOIoSbkghdWp6E4_HvcS_JNtoiJ4hs2usAIr8IGBBfkICib8h8RSQW6Du09x_AhNM5Um5W9w3pfadkgPwC5mefJs42MzglbT7y5t-sEDpPbG1SCxapyAdOShopf3Dm3am1NAG_-xDVbG1SCxannx7kf_Ms1y"
+				"Cookie": this.cookie
 			},
 			data
 		};
@@ -379411,8 +379411,8 @@ var require_tunnel = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_tunnel$1();
 }));
 //#endregion
-//#region ../libs_drpy/jsonpathplus.min.js
-var require_jsonpathplus_min = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+//#region shim/original-jsonpath.js
+var require_original_jsonpath = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function(e, t) {
 		"object" == typeof exports && "undefined" != typeof module ? t(exports) : "function" == typeof define && define.amd ? define(["exports"], t) : t((e = "undefined" != typeof globalThis ? globalThis : e || self).JSONPath = {});
 	})(exports, function(e) {
@@ -380658,13 +380658,21 @@ var require_jsonpathplus_min = /* @__PURE__ */ __commonJSMin(((exports, module) 
 	});
 }));
 //#endregion
-//#region ../libs_drpy/htmlParser.js
+//#region shim/jsonpath-shim.js
 var import_tunnel = /* @__PURE__ */ __toESM(require_tunnel(), 1);
+var import_original_jsonpath = /* @__PURE__ */ __toESM(require_original_jsonpath(), 1);
+const JP = import_original_jsonpath.JSONPath || import_original_jsonpath.default?.JSONPath || import_original_jsonpath.default;
+if (typeof globalThis !== "undefined") {
+	if (!globalThis.JSONPath) globalThis.JSONPath = {};
+	if (typeof JP === "function") globalThis.JSONPath.JSONPath = JP;
+	else if (JP && JP.JSONPath) globalThis.JSONPath = JP;
+}
+//#endregion
+//#region ../libs_drpy/htmlParser.js
 /**
 * HTML解析器工具
 * 基于cheerio提供HTML和JSON解析功能，支持类似海阔视界的解析语法
 */
-var import_jsonpathplus_min = require_jsonpathplus_min();
 /**
 * JSONPath查询工具
 */
@@ -383618,10 +383626,19 @@ var FileHeaderManager = class {
 			headerRegex: /@header\(([\s\S]*?)\)/,
 			createComment: (content) => `"""\n${content}\n"""`,
 			topCommentsRegex: /^(\s*(#[^\n]*\n|'''[\s\S]*?'''|"""[\s\S]*?""")\s*)+/
+		},
+		".php": {
+			start: "/*",
+			end: "*/",
+			regex: /(<\?php\s*)?(\s*\/\*[\s\S]*?\*\/)/,
+			headerRegex: /@header\(([\s\S]*?)\)/,
+			createComment: (content) => `/*\n${content}\n*/`,
+			topCommentsRegex: /(<\?php\s*)?(\s*(\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)\s*)+/
 		}
 	};
 	/**
 	* Find the @header(...) block in the comment text
+	* Optimized state machine for parsing nested structures
 	* @param {string} text Comment text
 	* @param {string} ext File extension (.js or .py)
 	* @returns {Object|null} { start, end, content }
@@ -383631,29 +383648,21 @@ var FileHeaderManager = class {
 		if (startIndex === -1) return null;
 		let index = startIndex + 8;
 		let balance = 1;
-		let inString = false;
-		let stringChar = "";
-		let escape = false;
-		let inLineComment = false;
-		for (; index < text.length; index++) {
+		const len = text.length;
+		while (index < len) {
 			const char = text[index];
-			if (inLineComment) {
-				if (char === "\n") inLineComment = false;
-				continue;
-			}
-			if (inString) {
-				if (escape) escape = false;
-				else if (char === "\\") escape = true;
-				else if (char === stringChar) inString = false;
-				continue;
-			}
-			if (char === "/" && text[index + 1] === "/") {
-				inLineComment = true;
+			if (char === "\"" || char === "'") {
+				const quote = char;
 				index++;
-			} else if (ext === ".py" && char === "#") inLineComment = true;
-			else if (char === "\"" || char === "'") {
-				inString = true;
-				stringChar = char;
+				while (index < len) {
+					const c = text[index];
+					if (c === "\\") index += 2;
+					else if (c === quote) {
+						index++;
+						break;
+					} else index++;
+				}
+				continue;
 			} else if (char === "(") balance++;
 			else if (char === ")") {
 				balance--;
@@ -383662,24 +383671,42 @@ var FileHeaderManager = class {
 					end: index + 1,
 					content: text.substring(startIndex + 8, index)
 				};
+			} else if (char === "/") {
+				const next = text[index + 1];
+				if (next === "/") {
+					index += 2;
+					const newline = text.indexOf("\n", index);
+					index = newline === -1 ? len : newline;
+					continue;
+				} else if (next === "*") {
+					index += 2;
+					const endComment = text.indexOf("*/", index);
+					if (endComment === -1) index = len;
+					else index = endComment + 2;
+					continue;
+				}
+			} else if (ext === ".py" && char === "#") {
+				const newline = text.indexOf("\n", index + 1);
+				index = newline === -1 ? len : newline;
+				continue;
 			}
+			index++;
 		}
 		return null;
 	}
 	/**
-	* 解析JavaScript对象字面量（支持无引号属性名）
+	* 解析对象字符串
 	* @param {string} str 对象字符串
 	* @returns {Object} 解析后的对象
 	*/
 	static parseObjectLiteral(str) {
-		const normalized = str.replace(/([{,]\s*)([a-zA-Z_$][\w$]*)(\s*:)/g, "$1\"$2\"$3").replace(/'([^']+)'/g, "\"$1\"");
 		try {
-			return JSON.parse(normalized);
+			return JSON5.parse(str);
 		} catch (e) {
 			try {
 				return new Function(`return ${str}`)();
-			} catch {
-				throw new Error(`Invalid header object: ${str}`);
+			} catch (evalError) {
+				throw new Error(`Invalid header object: ${str}. Error: ${evalError.message}`);
 			}
 		}
 	}
@@ -383743,46 +383770,56 @@ var FileHeaderManager = class {
 		const { createBackup = false } = options;
 		if (!filePath || typeof filePath !== "string") throw new Error("Invalid file path");
 		if (!headerObj || typeof headerObj !== "object") throw new Error("Invalid header object");
+		const ext = path.extname(filePath);
+		const config = this.COMMENT_CONFIG[ext];
+		if (!config) throw new Error(`Unsupported file type: ${ext}`);
+		const headerStr = `@header(${JSON5.stringify(headerObj, null, 2)})`;
+		if (await this._replaceHeaderBuffer(filePath, headerStr, config, ext)) return;
 		let content;
 		try {
 			content = await fs$1.readFile(filePath, "utf8");
 		} catch (error) {
 			throw new Error(`Failed to read file: ${error.message}`);
 		}
-		const originalContent = content;
-		const ext = path.extname(filePath);
-		const config = this.COMMENT_CONFIG[ext];
-		if (!config) throw new Error(`Unsupported file type: ${ext}`);
-		const headerStr = `@header(${JSON.stringify(headerObj, null, 2).replace(/"([a-zA-Z_$][\w$]*)":/g, "$1:").replace(/"/g, "'")})`;
 		const match = content.match(config.regex);
 		let newContent;
 		if (match) {
 			const [fullComment] = match;
 			const commentStartIndex = content.indexOf(fullComment);
 			const commentEndIndex = commentStartIndex + fullComment.length;
-			if (content.substring(0, commentStartIndex).trim() !== "") newContent = config.createComment(headerStr) + "\n\n" + content;
-			else {
+			const beforeComment = content.substring(0, commentStartIndex);
+			if (!(beforeComment.trim() === "" || ext === ".php" && beforeComment.trim() === "<?php")) {
+				let newComment = config.createComment(headerStr) + "\n\n";
+				if (ext === ".php") if (content.trim().startsWith("<?php")) newContent = content.replace(/<\?php\s*/, `<?php\n\n${newComment.trim()}\n\n`);
+				else newContent = `<?php\n\n${newComment.trim()}\n\n` + content;
+				else newContent = newComment + content;
+			} else {
 				const headerBlock = this.findHeaderBlock(fullComment, ext);
 				if (headerBlock) {
 					const updatedComment = fullComment.substring(0, headerBlock.start) + headerStr + fullComment.substring(headerBlock.end);
 					newContent = content.substring(0, commentStartIndex) + updatedComment + content.substring(commentEndIndex);
 				} else {
-					const updatedComment = fullComment.replace(config.end, "").trim() + `\n${headerStr}\n${config.end}`;
+					const trimmedComment = fullComment.trim();
+					let updatedComment;
+					if (ext === ".php" && trimmedComment.startsWith("<?php")) {
+						const endMarker = config.end;
+						const lastIndex = fullComment.lastIndexOf(endMarker);
+						if (lastIndex !== -1) updatedComment = fullComment.substring(0, lastIndex).trim() + `\n${headerStr}\n${endMarker}` + fullComment.substring(lastIndex + endMarker.length);
+						else updatedComment = fullComment + `\n${config.createComment(headerStr)}`;
+					} else updatedComment = fullComment.replace(config.end, "").trim() + `\n${headerStr}\n${config.end}`;
 					newContent = content.substring(0, commentStartIndex) + updatedComment + content.substring(commentEndIndex);
 				}
 			}
-		} else newContent = config.createComment(headerStr) + "\n\n" + content;
+		} else {
+			let newComment = config.createComment(headerStr) + "\n\n";
+			if (ext === ".php") if (content.trim().startsWith("<?php")) newContent = content.replace(/<\?php\s*/, `<?php\n\n${newComment.trim()}\n\n`);
+			else newContent = `<?php\n\n${newComment.trim()}\n\n` + content;
+			else newContent = newComment + content;
+		}
 		if (!newContent.replace(config.regex, "").trim()) throw new Error("写入失败：内容不能只包含文件头而无原始内容");
 		if (!newContent || newContent.trim().length === 0) throw new Error("Generated content is empty, operation aborted");
-		const originalCodeLines = originalContent.split("\n").filter((line) => {
-			const trimmed = line.trim();
-			return trimmed && !trimmed.startsWith("//") && !trimmed.startsWith("/*") && !trimmed.startsWith("*") && !trimmed.startsWith("*/") && !trimmed.startsWith("#") && !trimmed.startsWith("\"\"\"") && !trimmed.startsWith("'''");
-		});
-		const newCodeLines = newContent.split("\n").filter((line) => {
-			const trimmed = line.trim();
-			return trimmed && !trimmed.startsWith("//") && !trimmed.startsWith("/*") && !trimmed.startsWith("*") && !trimmed.startsWith("*/") && !trimmed.startsWith("#") && !trimmed.startsWith("\"\"\"") && !trimmed.startsWith("'''") && !trimmed.includes("@header(");
-		});
-		if (originalCodeLines.length > 5 && newCodeLines.length < originalCodeLines.length * .8) throw new Error("Content integrity check failed: significant code loss detected, operation aborted");
+		const diffRatio = Math.abs(newContent.length - content.length) / content.length;
+		if (content.length > 100 && diffRatio > .5 && newContent.length < content.length) throw new Error("Content integrity check failed: significant size reduction detected, operation aborted");
 		let backupPath = null;
 		if (createBackup) try {
 			backupPath = await this.createBackup(filePath);
@@ -383804,6 +383841,58 @@ var FileHeaderManager = class {
 				console.error(`Failed to restore from backup: ${restoreError.message}`);
 			}
 			throw new Error(`Failed to write file: ${error.message}`);
+		}
+	}
+	/**
+	* 使用 Buffer 高效地替换文件头，避免大文件 String 转换开销
+	* @private
+	*/
+	static async _replaceHeaderBuffer(filePath, headerStr, config, ext) {
+		let handle;
+		try {
+			handle = await fs$1.open(filePath, "r");
+			const stats = await handle.stat();
+			const scanSize = Math.min(stats.size, 64 * 1024);
+			const buffer = Buffer.alloc(scanSize);
+			await handle.read(buffer, 0, scanSize, 0);
+			await handle.close();
+			handle = null;
+			const match = buffer.toString("utf8").match(config.regex);
+			if (match) {
+				const [fullComment] = match;
+				const headerBlock = this.findHeaderBlock(fullComment, ext);
+				if (headerBlock) {
+					const commentStartOffset = buffer.indexOf(fullComment);
+					if (commentStartOffset === -1) return false;
+					const preHeaderStr = fullComment.substring(0, headerBlock.start);
+					const preHeaderLen = Buffer.byteLength(preHeaderStr);
+					const postHeaderStr = fullComment.substring(headerBlock.end);
+					const newHeaderBuf = Buffer.from(headerStr);
+					const replaceStart = commentStartOffset + preHeaderLen;
+					const oldHeaderContentStr = headerBlock.content;
+					const oldHeaderFullStr = fullComment.substring(headerBlock.start, headerBlock.end);
+					const oldHeaderByteLen = Buffer.byteLength(oldHeaderFullStr);
+					if (newHeaderBuf.length === oldHeaderByteLen) {
+						const writeHandle = await fs$1.open(filePath, "r+");
+						await writeHandle.write(newHeaderBuf, 0, newHeaderBuf.length, replaceStart);
+						await writeHandle.close();
+						return true;
+					} else {
+						const fullFileBuf = await fs$1.readFile(filePath);
+						const finalBuf = Buffer.concat([
+							fullFileBuf.subarray(0, replaceStart),
+							newHeaderBuf,
+							fullFileBuf.subarray(replaceStart + oldHeaderByteLen)
+						]);
+						await fs$1.writeFile(filePath, finalBuf);
+						return true;
+					}
+				}
+			}
+			return false;
+		} catch (e) {
+			if (handle) await handle.close();
+			return false;
 		}
 	}
 	/**
@@ -383840,11 +383929,18 @@ var FileHeaderManager = class {
 		let [fullComment] = match;
 		const headerBlock = this.findHeaderBlock(fullComment, ext);
 		if (headerBlock) {
-			let cleanedInner = (fullComment.substring(0, headerBlock.start) + fullComment.substring(headerBlock.end)).replace(config.start, "").replace(config.end, "").split("\n").filter((line) => line.trim().length > 0).join("\n");
-			if (!cleanedInner.trim()) content = content.replace(fullComment, "");
+			let beforeHeader = fullComment.substring(0, headerBlock.start);
+			let afterHeader = fullComment.substring(headerBlock.end);
+			beforeHeader = beforeHeader.replace(config.start, "");
+			afterHeader = afterHeader.replace(config.end, "");
+			if (ext === ".php") beforeHeader = beforeHeader.replace(/<\?php\s*/, "");
+			let cleanedInner = (beforeHeader + "\n" + afterHeader).split("\n").map((line) => line.trim()).filter((line) => line.length > 0).join("\n");
+			if (!cleanedInner) if (ext === ".php" && fullComment.trim().startsWith("<?php")) content = content.replace(fullComment, "<?php\n");
+			else content = content.replace(fullComment, "");
 			else {
-				const newComment = `${config.start}\n${cleanedInner}\n${config.end}`;
-				content = content.replace(fullComment, newComment);
+				let newComment = `${config.start}\n${cleanedInner}\n${config.end}`;
+				if (ext === ".php" && fullComment.trim().startsWith("<?php")) newComment = `<?php\n\n${newComment}`;
+				content = content.replace(fullComment, () => newComment);
 			}
 		}
 		return content.trim();
